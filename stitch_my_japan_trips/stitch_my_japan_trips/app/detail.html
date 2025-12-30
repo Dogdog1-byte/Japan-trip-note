@@ -209,19 +209,133 @@
         </nav>
     </div>
 
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        window.firebaseApp = null;
+        window.firebaseDb = null;
+        let isSharedMode = false;
+        let shareId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            tripId = urlParams.get('id');
+            // Check if we are in shared mode via URL or local storage context
+            // Ideally passing shareId in URL if opening from link, or deduce from trip data
+            
+            // However, our share link logic was collaborate.html?share=XYZ
+            // Users might navigate here from collaborate.html which saved the trip to localStorage
+            // We need to know if this specific trip is a "shared" trip to enable sync.
+            
+            // For now, we'll try to init Firebase if config exists, and check if this trip exists in shared_trips
+            // A more robust way: collaborate.html saves 'shareId' into the trip object in localStorage
+            
+            initFirebase();
+            
+            if (!tripId) return alert('No Trip ID');
+            loadTripData();
+        });
+
+        function initFirebase() {
+            const dbUrl = localStorage.getItem('firebase_db_url');
+            if (!dbUrl) return; // No config, offline mode
+
+            try {
+                // Parse Project ID
+                let projectId = 'japan-trip';
+                try {
+                    const url = new URL(dbUrl);
+                    const hostParts = url.hostname.split('.');
+                    if (hostParts[0]) projectId = hostParts[0].replace('-default-rtdb', '');
+                } catch(e) {}
+
+                const firebaseConfig = {
+                    apiKey: "dummy-api-key",
+                    databaseURL: dbUrl,
+                    projectId: projectId
+                };
+
+                window.firebaseApp = initializeApp(firebaseConfig);
+                window.firebaseDb = getDatabase(window.firebaseApp);
+            } catch (error) {
+                console.error('Firebase init error in detail:', error);
+            }
+        }
+
+        // Expose function to sync data
+        window.syncTripToFirebase = function(trip) {
+            if (!window.firebaseDb || !trip.shareId) return;
+
+            console.log('Syncing to Firebase...', trip.shareId);
+            const tripRef = ref(window.firebaseDb, `shared_trips/${trip.shareId}`);
+            set(tripRef, trip).catch(err => console.error('Sync failed', err));
+        };
+
+        // Listen for updates
+        window.listenForUpdates = function(trip) {
+            if (!window.firebaseDb || !trip.shareId) return;
+            
+            // Avoid double listening
+            if (window.currentListeningId === trip.shareId) return;
+            window.currentListeningId = trip.shareId;
+
+            console.log('Listening for updates...', trip.shareId);
+            const tripRef = ref(window.firebaseDb, `shared_trips/${trip.shareId}`);
+            onValue(tripRef, (snapshot) => {
+                const remoteTrip = snapshot.val();
+                if (!remoteTrip) return;
+
+                // Simple merge strategy: Remote wins if different
+                // To avoid loops, compare stringified
+                const localStr = JSON.stringify(currentTrip);
+                const remoteStr = JSON.stringify(remoteTrip);
+
+                if (localStr !== remoteStr) {
+                    console.log('Remote update received, refreshing UI');
+                    currentTrip = remoteTrip;
+                    // Update LocalStorage
+                    const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
+                    const index = trips.findIndex(t => t.id == tripId);
+                    if (index !== -1) {
+                        trips[index] = currentTrip;
+                        localStorage.setItem('japan_trips', JSON.stringify(trips));
+                    }
+                    
+                    // Refresh UI
+                    renderTabs();
+                    renderTimeline();
+                }
+            });
+        };
+    </script>
     <script>
         let currentTrip = null;
         let currentDayIndex = 0; // 0-based index relative to start date
         let tripDays = [];
         let tripId = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            tripId = urlParams.get('id');
-            if (!tripId) return alert('No Trip ID');
+        // document.addEventListener('DOMContentLoaded', ... ) is handled in module script above for init flow
+        // But we need the legacy loadTripData trigger.
+        // Let's modify the flow: The module script calls initFirebase, then loadTripData calling is handled here but slightly delayed/integrated?
+        // Actually, we can keep separate listeners, but we need to ensure firebase is ready.
+        // Let's just rely on the existing DOMContentLoaded in the main script for UI loading, 
+        // and add the listeners in the module script.
+        
+        // Wait... module script runs deferred by default. 
+        // Let's combine logic or let them run in parallel.
+        
+        // To make `syncTripToFirebase` available globally from the module:
+        // window.syncTripToFirebase is set.
+        
+    </script>
 
-            loadTripData();
-        });
+    <script>
+       // Main Logic
+        // ... (We will keep the existing script but need to ensure it uses window.syncTripToFirebase)
+
 
         function loadTripData() {
             const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
@@ -231,6 +345,11 @@
                 alert('行程不存在');
                 window.location.href = 'trips.html';
                 return;
+            }
+
+            // Check if shared
+            if (currentTrip.shareId && window.listenForUpdates) {
+                window.listenForUpdates(currentTrip);
             }
 
             document.getElementById('header-title').innerText = currentTrip.name;
@@ -250,6 +369,24 @@
 
             renderTabs();
             renderTimeline();
+        }
+
+        // ... existing functions ...
+
+        function saveAndRender() {
+            const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
+            const index = trips.findIndex(t => t.id == tripId);
+            if (index !== -1) {
+                trips[index] = currentTrip;
+                localStorage.setItem('japan_trips', JSON.stringify(trips));
+                
+                // Sync to Firebase
+                if (window.syncTripToFirebase && currentTrip.shareId) {
+                    window.syncTripToFirebase(currentTrip);
+                }
+            }
+            renderTimeline();
+            closeModal();
         }
 
         function renderTabs() {
@@ -491,16 +628,7 @@
             closeModal();
         }
 
-        function saveAndRender() {
-            // Update LocalStorage
-            const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
-            const idx = trips.findIndex(t => t.id == tripId);
-            if (idx !== -1) {
-                trips[idx] = currentTrip;
-                localStorage.setItem('japan_trips', JSON.stringify(trips));
-            }
-            renderTimeline();
-        }
+
 
         function getDefaultImage(tag) {
             // Simple fallback placeholders
