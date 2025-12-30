@@ -192,10 +192,48 @@
                 localStorage.setItem('user_name', userName);
 
                 alert('✅ Firebase 連線成功！\n現在可以分享行程了');
+
+                // Check for share link logic
+                const urlParams = new URLSearchParams(window.location.search);
+                const shareId = urlParams.get('share');
+                if (shareId && window.importSharedTrip) {
+                    window.importSharedTrip(shareId);
+                }
+
             } catch (error) {
                 console.error('Firebase init error:', error);
                 alert(`❌ 連線失敗：${error.message}\n請確認 Database URL 是否正確`);
             }
+        };
+
+        window.importSharedTrip = function (shareId) {
+            if (!window.firebaseDb) return;
+
+            console.log('Fetching shared trip:', shareId);
+            const tripRef = ref(window.firebaseDb, `shared_trips/${shareId}`);
+
+            onValue(tripRef, (snapshot) => {
+                const sharedTrip = snapshot.val();
+                if (sharedTrip) {
+                    const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
+                    const index = trips.findIndex(t => t.id == sharedTrip.id);
+
+                    if (index !== -1) {
+                        // Update existing trip with remote data
+                        trips[index] = sharedTrip;
+                    } else {
+                        // Add new shared trip
+                        trips.push(sharedTrip);
+                    }
+                    localStorage.setItem('japan_trips', JSON.stringify(trips));
+
+                    if (confirm(`📦 已載入共享行程：${sharedTrip.name}\n是否現在開啟？`)) {
+                        window.location.href = `detail.html?id=${sharedTrip.id}`;
+                    }
+                } else {
+                    alert('❌ 找不到該分享的行程，可能已被刪除或連結錯誤');
+                }
+            }, { onlyOnce: true });
         };
 
         window.shareTrip = function () {
@@ -211,11 +249,21 @@
             }
 
             const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
-            const trip = trips.find(t => t.id == tripId);
+            const tripIndex = trips.findIndex(t => t.id == tripId);
+            if (tripIndex === -1) return;
 
-            if (!trip) return;
+            const trip = trips[tripIndex];
 
-            const shareId = Math.random().toString(36).substring(2, 10);
+            // Generated or existing share ID
+            const shareId = trip.shareId || Math.random().toString(36).substring(2, 10);
+
+            // IMPORTANT: Save shareId to trip object explicitly
+            trip.shareId = shareId;
+
+            // Save locally first
+            trips[tripIndex] = trip;
+            localStorage.setItem('japan_trips', JSON.stringify(trips));
+
             const tripRef = ref(window.firebaseDb, `shared_trips/${shareId}`);
 
             set(tripRef, trip).then(() => {
@@ -223,18 +271,7 @@
                 document.getElementById('shareLink').value = shareUrl;
                 document.getElementById('shareResult').classList.remove('hidden');
 
-                // Listen for changes
-                onValue(tripRef, (snapshot) => {
-                    const sharedTrip = snapshot.val();
-                    if (sharedTrip) {
-                        const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
-                        const index = trips.findIndex(t => t.id == tripId);
-                        if (index !== -1) {
-                            trips[index] = sharedTrip;
-                            localStorage.setItem('japan_trips', JSON.stringify(trips));
-                        }
-                    }
-                });
+                // No need to listen here, detail.html handles sync
             }).catch(error => {
                 alert('分享失敗：' + error.message);
             });
