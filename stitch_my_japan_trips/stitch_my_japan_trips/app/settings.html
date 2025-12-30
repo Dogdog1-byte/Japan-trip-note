@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>設定</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "primary-content": "#0a2815",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2f23",
+                        "text-main-light": "#102216",
+                        "text-main-dark": "#f6f8f6",
+                        "text-sub-light": "#5c6f60",
+                        "text-sub-dark": "#a3b5a7",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans TC", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "1.5rem", "xl": "2rem", "2xl": "2.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark min-h-screen text-text-main-light dark:text-text-main-dark flex justify-center">
+    <div
+        class="relative flex h-full min-h-screen w-full max-w-md flex-col overflow-x-hidden bg-background-light dark:bg-background-dark pb-24">
+
+        <header
+            class="sticky top-0 z-10 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm px-4 pt-8 pb-4">
+            <h1 class="text-3xl font-extrabold tracking-tight">設定</h1>
+        </header>
+
+        <div class="flex flex-col gap-6 p-4">
+            <!-- Profile Section -->
+            <div class="flex items-center gap-4 p-4 bg-surface-light dark:bg-surface-dark rounded-2xl">
+                <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span class="text-2xl font-bold text-primary" id="userInitial">我</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg" id="displayName">旅行者</h3>
+                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark">點擊修改名稱</p>
+                </div>
+                <button onclick="editUserName()"
+                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition">
+                    <span class="material-symbols-outlined">edit</span>
+                </button>
+            </div>
+
+            <!-- General Settings -->
+            <div class="space-y-2">
+                <h2 class="text-sm font-bold text-text-sub-light dark:text-text-sub-dark px-2">一般設定</h2>
+
+                <button onclick="toggleDarkMode()"
+                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">dark_mode</span>
+                        <span class="font-medium">深色模式</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="darkModeToggle" class="sr-only peer">
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                        </div>
+                    </label>
+                </button>
+
+                <button
+                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">notifications</span>
+                        <span class="font-medium">通知</span>
+                    </div>
+                    <span class="material-symbols-outlined text-text-sub-light">chevron_right</span>
+                </button>
+            </div>
+
+            <!-- Data & Storage -->
+            <div class="space-y-2">
+                <h2 class="text-sm font-bold text-text-sub-light dark:text-text-sub-dark px-2">資料與儲存</h2>
+
+                <button onclick="exportData()"
+                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">download</span>
+                        <span class="font-medium">匯出資料</span>
+                    </div>
+                    <span class="material-symbols-outlined text-text-sub-light">chevron_right</span>
+                </button>
+
+                <button onclick="clearData()"
+                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-red-500">delete</span>
+                        <span class="font-medium text-red-500">清除所有資料</span>
+                    </div>
+                    <span class="material-symbols-outlined text-text-sub-light">chevron_right</span>
+                </button>
+            </div>
+
+            <!-- About -->
+            <div class="space-y-2">
+                <h2 class="text-sm font-bold text-text-sub-light dark:text-text-sub-dark px-2">關於</h2>
+
+                <button
+                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                        <span class="font-medium">版本資訊</span>
+                    </div>
+                    <span class="text-sm text-text-sub-light">v1.0.0</span>
+                </button>
+
+                <button
+                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">privacy_tip</span>
+                        <span class="font-medium">隱私權政策</span>
+                    </div>
+                    <span class="material-symbols-outlined text-text-sub-light">chevron_right</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav
+            class="fixed bottom-0 z-30 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 pb-safe pt-2">
+            <div class="flex justify-around items-center h-16 px-2">
+                <a href="trips.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="text-[10px] font-medium">首頁</span>
+                </a>
+                <a href="checklist.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">checklist</span>
+                    <span class="text-[10px] font-medium">待辦</span>
+                </a>
+                <a href="collaborate.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">group</span>
+                    <span class="text-[10px] font-medium">協作</span>
+                </a>
+                <a href="settings.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-primary">
+                    <span class="material-symbols-outlined font-variation-settings-fill">settings</span>
+                    <span class="text-[10px] font-bold">設定</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        // Load user profile
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserProfile();
+            initializeDarkMode();
+        });
+
+        function loadUserProfile() {
+            const userName = localStorage.getItem('user_name') || '旅行者';
+            document.getElementById('displayName').textContent = userName;
+            document.getElementById('userInitial').textContent = userName.charAt(0);
+        }
+
+        function editUserName() {
+            const currentName = localStorage.getItem('user_name') || '旅行者';
+            const newName = prompt('請輸入您的名稱：', currentName);
+
+            if (newName && newName.trim()) {
+                localStorage.setItem('user_name', newName.trim());
+                loadUserProfile();
+                alert('✅ 名稱已更新！');
+            }
+        }
+
+        // Dark mode initialization
+        function initializeDarkMode() {
+            const darkMode = localStorage.getItem('darkMode');
+            const toggle = document.getElementById('darkModeToggle');
+
+            if (darkMode === 'true') {
+                document.documentElement.classList.add('dark');
+                toggle.checked = true;
+            }
+        }
+
+        // Dark mode toggle
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const toggle = document.getElementById('darkModeToggle');
+
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                toggle.checked = false;
+                localStorage.setItem('darkMode', 'false');
+            } else {
+                html.classList.add('dark');
+                toggle.checked = true;
+                localStorage.setItem('darkMode', 'true');
+            }
+        }
+
+        // Export data
+        function exportData() {
+            const trips = localStorage.getItem('japan_trips') || '[]';
+            const blob = new Blob([trips], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `japan-trips-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('資料已匯出！');
+        }
+
+        // Clear data
+        function clearData() {
+            if (confirm('確定要清除所有資料嗎？此操作無法復原。')) {
+                localStorage.removeItem('japan_trips');
+                alert('所有資料已清除');
+                window.location.href = 'trips.html';
+            }
+        }
+    </script>
+</body>
+
+</html>

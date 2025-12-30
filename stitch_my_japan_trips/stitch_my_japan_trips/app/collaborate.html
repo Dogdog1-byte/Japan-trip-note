@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>多人協作</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "primary-content": "#0a2815",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2f23",
+                        "text-main-light": "#102216",
+                        "text-main-dark": "#f6f8f6",
+                        "text-sub-light": "#5c6f60",
+                        "text-sub-dark": "#a3b5a7",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans TC", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "1.5rem", "xl": "2rem", "2xl": "2.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark min-h-screen text-text-main-light dark:text-text-main-dark flex justify-center">
+    <div
+        class="relative flex h-full min-h-screen w-full max-w-md flex-col overflow-x-hidden bg-background-light dark:bg-background-dark pb-24">
+
+        <header
+            class="sticky top-0 z-10 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm px-4 pt-8 pb-4">
+            <h1 class="text-3xl font-extrabold tracking-tight">多人協作</h1>
+            <p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-2">與朋友一起規劃行程</p>
+        </header>
+
+        <div class="flex flex-col gap-6 p-4">
+            <!-- Firebase Config -->
+            <div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-6">
+                <h3 class="font-bold text-lg mb-4">Firebase 設定</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold mb-1 text-text-sub-light">您的名稱</label>
+                        <input type="text" id="userName" placeholder="例如：小明"
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary">
+                        <p class="text-xs text-text-sub-light mt-1">💡 讓協作者知道是誰在編輯</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1 text-text-sub-light">Database URL</label>
+                        <input type="text" id="dbUrl"
+                            placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app"
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary">
+                        <p class="text-xs text-text-sub-light mt-1">💡 在 Realtime Database 頁面上方可以找到</p>
+                    </div>
+                    <button onclick="initFirebase()"
+                        class="w-full py-3 bg-primary text-primary-content rounded-xl font-bold hover:opacity-90 transition">
+                        🚀 啟用協作功能
+                    </button>
+                </div>
+            </div>
+
+            <!-- Share Section -->
+            <div id="shareSection" class="space-y-4">
+                <div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-6">
+                    <h3 class="font-bold text-lg mb-4">分享行程</h3>
+                    <select id="tripSelect"
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 mb-3 focus:ring-1 focus:ring-primary">
+                        <option value="">選擇要分享的行程...</option>
+                    </select>
+                    <button onclick="shareTrip()"
+                        class="w-full py-3 bg-primary text-primary-content rounded-xl font-bold hover:opacity-90 transition flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">share</span>
+                        生成分享連結
+                    </button>
+                    <div id="shareResult" class="hidden mt-4 p-4 bg-primary/10 rounded-xl">
+                        <p class="text-xs font-bold mb-2">✅ 分享連結已生成：</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="shareLink" readonly
+                                class="flex-1 bg-white dark:bg-black/20 border-none rounded-lg p-2 text-xs select-all">
+                            <button onclick="copyLink()"
+                                class="px-4 py-2 bg-primary text-primary-content rounded-lg text-sm font-bold hover:opacity-90 transition">
+                                複製
+                            </button>
+                        </div>
+                        <p class="text-xs text-text-sub-light mt-2">傳給朋友後，雙方的修改會即時同步！</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav
+            class="fixed bottom-0 z-30 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 pb-safe pt-2">
+            <div class="flex justify-around items-center h-16 px-2">
+                <a href="trips.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="text-[10px] font-medium">首頁</span>
+                </a>
+                <a href="checklist.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">checklist</span>
+                    <span class="text-[10px] font-medium">待辦</span>
+                </a>
+                <a href="collaborate.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-primary">
+                    <span class="material-symbols-outlined font-variation-settings-fill">group</span>
+                    <span class="text-[10px] font-bold">協作</span>
+                </a>
+                <a href="settings.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="text-[10px] font-medium">設定</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Initialize dark mode
+        document.addEventListener('DOMContentLoaded', () => {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+
+            // Restore saved values
+            const savedUrl = localStorage.getItem('firebase_db_url');
+            const savedName = localStorage.getItem('user_name');
+            if (savedUrl) document.getElementById('dbUrl').value = savedUrl;
+            if (savedName) document.getElementById('userName').value = savedName;
+
+            loadTripsToSelect();
+        });
+
+        window.firebaseApp = null;
+        window.firebaseDb = null;
+
+        window.initFirebase = function () {
+            const dbUrl = document.getElementById('dbUrl').value.trim();
+            const userName = document.getElementById('userName').value.trim() || '訪客';
+
+            if (!dbUrl) {
+                alert('請輸入 Database URL');
+                return;
+            }
+
+            try {
+                const projectId = dbUrl.match(/https:\/\/(.+?)-default-rtdb/)?.[1] || 'japan-trip';
+
+                const firebaseConfig = {
+                    databaseURL: dbUrl,
+                    projectId: projectId
+                };
+
+                window.firebaseApp = initializeApp(firebaseConfig);
+                window.firebaseDb = getDatabase(window.firebaseApp);
+
+                localStorage.setItem('firebase_db_url', dbUrl);
+                localStorage.setItem('user_name', userName);
+
+                alert('✅ Firebase 連線成功！\n現在可以分享行程了');
+            } catch (error) {
+                console.error('Firebase init error:', error);
+                alert('❌ 連線失敗，請檢查 Database URL 是否正確');
+            }
+        };
+
+        window.shareTrip = function () {
+            const tripId = document.getElementById('tripSelect').value;
+            if (!tripId) {
+                alert('請選擇要分享的行程');
+                return;
+            }
+
+            if (!window.firebaseDb) {
+                alert('請先啟用 Firebase');
+                return;
+            }
+
+            const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
+            const trip = trips.find(t => t.id == tripId);
+
+            if (!trip) return;
+
+            const shareId = Math.random().toString(36).substring(2, 10);
+            const tripRef = ref(window.firebaseDb, `shared_trips/${shareId}`);
+
+            set(tripRef, trip).then(() => {
+                const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+                document.getElementById('shareLink').value = shareUrl;
+                document.getElementById('shareResult').classList.remove('hidden');
+
+                // Listen for changes
+                onValue(tripRef, (snapshot) => {
+                    const sharedTrip = snapshot.val();
+                    if (sharedTrip) {
+                        const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
+                        const index = trips.findIndex(t => t.id == tripId);
+                        if (index !== -1) {
+                            trips[index] = sharedTrip;
+                            localStorage.setItem('japan_trips', JSON.stringify(trips));
+                        }
+                    }
+                });
+            }).catch(error => {
+                alert('分享失敗：' + error.message);
+            });
+        };
+
+        window.copyLink = function () {
+            const input = document.getElementById('shareLink');
+            input.select();
+            document.execCommand('copy');
+            alert('✅ 連結已複製！傳給朋友即可一起編輯');
+        };
+
+        function loadTripsToSelect() {
+            const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
+            const select = document.getElementById('tripSelect');
+            select.innerHTML = '<option value="">選擇要分享的行程...</option>';
+
+            trips.forEach(trip => {
+                const option = document.createElement('option');
+                option.value = trip.id;
+                option.textContent = trip.name;
+                select.appendChild(option);
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>建立新行程</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "primary-content": "#0a2815",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2f23",
+                        "text-main-light": "#102216",
+                        "text-main-dark": "#f6f8f6",
+                        "text-sub-light": "#5c6f60",
+                        "text-sub-dark": "#a3b5a7",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans TC", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "1.5rem", "xl": "2rem", "2xl": "2.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark min-h-screen text-text-main-light dark:text-text-main-dark flex justify-center">
+    <div
+        class="relative flex h-full min-h-screen w-full max-w-md flex-col overflow-x-hidden bg-background-light dark:bg-background-dark pb-10">
+
+        <!-- Header -->
+        <header class="sticky top-0 z-10 p-4">
+            <button onclick="history.back()"
+                class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div class="mt-4 px-2">
+                <h1 class="text-3xl font-extrabold tracking-tight">建立新行程</h1>
+                <p class="text-text-sub-light dark:text-text-sub-dark mt-1">開始規劃您的下一段旅程</p>
+            </div>
+        </header>
+
+        <!-- Form -->
+        <main class="flex-1 px-6 py-6 flex flex-col gap-6">
+
+            <div class="space-y-2">
+                <label class="block text-sm font-bold text-text-main-light dark:text-text-main-dark">行程名稱</label>
+                <input type="text" id="tripName" placeholder="例如：東京五日遊"
+                    class="w-full bg-surface-light dark:bg-surface-dark border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary text-lg placeholder-text-sub-light/50">
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-sm font-bold text-text-main-light dark:text-text-main-dark">目的地</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-sub-light">flight_takeoff</span>
+                    <input type="text" id="tripDest" placeholder="例如：日本、大阪、京都"
+                        class="w-full pl-12 bg-surface-light dark:bg-surface-dark border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary text-base">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-text-main-light dark:text-text-main-dark">出發日期</label>
+                    <input type="date" id="startDate"
+                        class="w-full bg-surface-light dark:bg-surface-dark border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary text-base">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-text-main-light dark:text-text-main-dark">結束日期</label>
+                    <input type="date" id="endDate"
+                        class="w-full bg-surface-light dark:bg-surface-dark border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary text-base">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-sm font-bold text-text-main-light dark:text-text-main-dark">封面圖片 (選填)</label>
+                <!-- Simplified Image Selection -->
+                <div class="grid grid-cols-3 gap-2">
+                    <button
+                        onclick="selectImage(this, 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600')"
+                        class="image-option rounded-xl overflow-hidden aspect-square border-4 border-transparent hover:opacity-80 transition relative">
+                        <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=200"
+                            class="w-full h-full object-cover">
+                    </button>
+                    <button
+                        onclick="selectImage(this, 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600')"
+                        class="image-option rounded-xl overflow-hidden aspect-square border-4 border-transparent hover:opacity-80 transition relative">
+                        <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=200"
+                            class="w-full h-full object-cover">
+                    </button>
+                    <button
+                        onclick="selectImage(this, 'https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?auto=format&fit=crop&w=600')"
+                        class="image-option rounded-xl overflow-hidden aspect-square border-4 border-transparent hover:opacity-80 transition relative">
+                        <img src="https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?auto=format&fit=crop&w=200"
+                            class="w-full h-full object-cover">
+                    </button>
+                </div>
+                <input type="hidden" id="selectedImage"
+                    value="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600">
+            </div>
+
+        </main>
+
+        <!-- Footer Action -->
+        <div class="p-6">
+            <button onclick="createTrip()"
+                class="w-full h-14 bg-primary text-primary-content rounded-full font-bold text-lg shadow-lg shadow-primary/30 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                建立行程
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Set default dates
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').value = today;
+        document.getElementById('endDate').value = today;
+
+        function selectImage(btn, url) {
+            document.querySelectorAll('.image-option').forEach(b => b.classList.remove('border-primary'));
+            btn.classList.add('border-primary');
+            document.getElementById('selectedImage').value = url;
+        }
+        // Select first by default
+        document.querySelector('.image-option').classList.add('border-primary');
+
+        function createTrip() {
+            const name = document.getElementById('tripName').value.trim();
+            const dest = document.getElementById('tripDest').value.trim();
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const image = document.getElementById('selectedImage').value;
+
+            if (!name) return alert('請輸入行程名稱');
+            if (new Date(end) < new Date(start)) return alert('結束日期不能早於出發日期');
+
+            const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
+
+            const newTrip = {
+                id: Date.now(),
+                name, dest, start, end,
+                image,
+                status: 'planning',
+                tag: '規劃中',
+                itinerary: {} // Empty itinerary
+            };
+
+            // Pre-populate itinerary days keys based on date range
+            // (Optional, can also be done dynamically in detail view)
+
+            trips.unshift(newTrip);
+            localStorage.setItem('japan_trips', JSON.stringify(trips));
+
+            // Redirect
+            window.location.href = `detail.html?id=${newTrip.id}`;
+        }
+    </script>
+</body>
+
+</html>
