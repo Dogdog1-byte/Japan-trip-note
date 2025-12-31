@@ -66,6 +66,11 @@
                 <div id="category-summary" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                     <!-- Categories -->
                 </div>
+                <div id="exchange-rate-info"
+                    class="mt-4 pt-4 border-t border-white/20 text-[10px] font-bold opacity-80 flex justify-between items-center">
+                    <span>匯率更新：<span id="rate-time">載入中...</span></span>
+                    <span>1 JPY ≈ <span id="jpy-twd-rate">...</span> TWD</span>
+                </div>
             </div>
 
             <!-- Trip Selector (if needed) -->
@@ -78,12 +83,24 @@
             </div>
 
             <!-- Expense List -->
-            <div id="expenses-container" class="space-y-4">
+            <div id="expenses-container" class="space-y-4 mb-8">
                 <!-- Expenses Injected Here -->
-                <div id="empty-expenses" class="text-center py-20 opacity-40 italic">
-                    <span class="material-symbols-outlined text-6xl mb-4">receipt_long</span>
-                    <p>尚未有任何支出紀錄</p>
+            </div>
+
+            <!-- Settlement Summary -->
+            <div id="settlement-section" class="mb-20 hidden">
+                <div class="flex items-center gap-2 mb-4 px-2">
+                    <span class="material-symbols-outlined text-primary">analytics</span>
+                    <h3 class="text-lg font-bold">結算分析 (誰該給誰)</h3>
                 </div>
+                <div id="settlement-list" class="space-y-3">
+                    <!-- Settlement Items Injected Here -->
+                </div>
+            </div>
+
+            <div id="empty-expenses" class="text-center py-20 opacity-40 italic">
+                <span class="material-symbols-outlined text-6xl mb-4">receipt_long</span>
+                <p>尚未有任何支出紀錄</p>
             </div>
         </main>
 
@@ -132,23 +149,48 @@
                         class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
                 </div>
 
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">付款人 (誰墊錢)</label>
+                        <select id="expPayer"
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-base font-bold focus:ring-1 focus:ring-primary">
+                            <!-- Members Injected Here -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">分帳成員</label>
+                        <div id="split-participants"
+                            class="flex flex-col gap-1 bg-gray-50 dark:bg-black/20 rounded-xl p-2 max-h-32 overflow-y-auto">
+                            <!-- Participant Checkboxes Injected Here -->
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">付款人</label>
-                    <select id="expPayer"
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">支付方式</label>
+                    <select id="expMethod"
                         class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
-                        <!-- Members Injected Here -->
+                        <option value="現金">💵 現金</option>
+                        <option value="信用卡">💳 信用卡</option>
+                        <option value="其他">🔘 其他</option>
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">備註 (選填)</label>
-                    <input type="text" id="expDesc" placeholder="刷卡或是付現..."
+                    <textarea id="expDesc" placeholder="例如：某支某店買的..." rows="3"
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary resize-y min-h-[80px]"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">參考網址 (選填)</label>
+                    <input type="url" id="expUrl" placeholder="https://maps.app.goo.gl/..."
                         class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
                 </div>
 
                 <div class="pt-4">
-                    <button type="submit"
-                        class="w-full py-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform">
+                    <button type="submit" id="saveExpenseBtn"
+                        class="w-full py-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                         儲存支出
                     </button>
                 </div>
@@ -197,14 +239,39 @@
             document.documentElement.classList.add('dark');
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const isConfigured = initApp();
-            if (!isConfigured) {
-                location.href = 'trips.html';
-                return;
-            }
+        let exchangeRate = 0.22; // Default fallback
+        let rateLastUpdated = "";
 
-            // Listen to trips list to populate selector
+        async function fetchExchangeRate() {
+            try {
+                const res = await fetch('https://open.er-api.com/v6/latest/JPY');
+                const data = await res.json();
+                if (data && data.rates && data.rates.TWD) {
+                    exchangeRate = data.rates.TWD;
+                    rateLastUpdated = new Date().toLocaleString('zh-TW', { hour12: false });
+                    localStorage.setItem('cached_jpy_rate', exchangeRate);
+                    localStorage.setItem('cached_rate_time', rateLastUpdated);
+                    updateRateDisplay();
+                }
+            } catch (e) {
+                console.error("Failed to fetch rate", e);
+                exchangeRate = parseFloat(localStorage.getItem('cached_jpy_rate')) || 0.22;
+                rateLastUpdated = localStorage.getItem('cached_rate_time') || "離線數據";
+                updateRateDisplay();
+            }
+        }
+
+        function updateRateDisplay() {
+            const rateEl = document.getElementById('jpy-twd-rate');
+            const timeEl = document.getElementById('rate-time');
+            if (rateEl) rateEl.innerText = exchangeRate.toFixed(4);
+            if (timeEl) timeEl.innerText = rateLastUpdated;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchExchangeRate();
+            const isConfigured = initApp();
+            // ... (rest of old initApp logic) ...
             syncTripsList((trips) => {
                 allTrips = trips;
                 const select = document.getElementById('tripSelect');
@@ -220,21 +287,33 @@
 
                 if (oldVal && trips.find(t => t.id == oldVal)) {
                     select.value = oldVal;
-                    // Real-time update members/expenses if they changed
                     currentTrip = trips.find(t => t.id == oldVal);
-                    updatePayerList();
+                    updateParticipantList();
                     renderExpenses();
                 }
             });
 
-            function updatePayerList() {
+            function updateParticipantList() {
                 if (!currentTrip) return;
+                const members = currentTrip.members || [getUserName()];
+
+                // Update Split Checkboxes
+                const container = document.getElementById('split-participants');
+                container.innerHTML = members.map(m => `
+                    <label class="flex items-center gap-2 p-1.5 hover:bg-white/50 rounded-lg cursor-pointer transition">
+                        <input type="checkbox" name="participant" value="${m}" checked class="rounded border-gray-300 text-primary focus:ring-primary size-4">
+                        <span class="text-xs font-bold truncate">${m}</span>
+                    </label>
+                `).join('');
+
+                // Update Paid By Dropdown
                 const payerSelect = document.getElementById('expPayer');
                 const oldPayer = payerSelect.value;
-                const members = currentTrip.members || [getUserName()];
                 payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
                 if (members.includes(oldPayer)) {
                     payerSelect.value = oldPayer;
+                } else {
+                    payerSelect.value = getUserName();
                 }
             }
 
@@ -247,6 +326,7 @@
                     document.getElementById('addExpenseBtn').disabled = true;
                     document.getElementById('summary-card').classList.add('hidden');
                     document.getElementById('current-trip-name').innerText = "請選擇行程";
+                    document.getElementById('settlement-section').classList.add('hidden'); // Hide settlement when no trip selected
                     return;
                 }
 
@@ -254,7 +334,7 @@
                 document.getElementById('addExpenseBtn').disabled = false;
                 document.getElementById('current-trip-name').innerText = currentTrip.name;
 
-                updatePayerList();
+                updateParticipantList();
                 renderExpenses();
             });
         });
@@ -267,6 +347,7 @@
             modalOverlay.classList.remove('opacity-0');
             modalContent.classList.remove('translate-y-full');
             document.getElementById('expenseForm').reset();
+            updateParticipantList(); // Ensure fresh list
         }
 
         window.closeModal = function () {
@@ -281,13 +362,26 @@
             e.preventDefault();
             if (!currentTrip) return;
 
+            const amountJpy = parseInt(document.getElementById('expAmount').value);
+            const participants = Array.from(document.querySelectorAll('input[name="participant"]:checked')).map(i => i.value);
+            const payer = document.getElementById('expPayer').value;
+
+            if (participants.length === 0) {
+                alert("請至少選擇一位分帳成員");
+                return;
+            }
+
             const expense = {
                 id: Date.now(),
-                amount: parseInt(document.getElementById('expAmount').value),
+                amount: amountJpy,
+                amountTwd: Math.round(amountJpy * exchangeRate),
                 category: document.getElementById('expCategory').value,
                 title: document.getElementById('expTitle').value,
+                method: document.getElementById('expMethod').value,
                 desc: document.getElementById('expDesc').value,
-                payer: document.getElementById('expPayer').value,
+                url: document.getElementById('expUrl').value,
+                payer: payer,
+                participants: participants,
                 time: new Date().toISOString()
             };
 
@@ -317,21 +411,27 @@
                 container.innerHTML = '';
                 container.appendChild(empty);
                 summaryCard.classList.add('hidden');
+                document.getElementById('settlement-section').classList.add('hidden');
                 return;
             }
 
             summaryCard.classList.remove('hidden');
             empty.classList.add('hidden');
 
-            // Sort by time desc
             const expenses = [...currentTrip.expenses].sort((a, b) => b.id - a.id);
 
-            let total = 0;
+            let totalJpy = 0;
+            let totalTwd = 0;
             const cats = {};
 
             container.innerHTML = expenses.map(exp => {
-                total += exp.amount;
+                totalJpy += exp.amount;
+                totalTwd += (exp.amountTwd || 0);
                 cats[exp.category] = (cats[exp.category] || 0) + exp.amount;
+
+                const splitCount = exp.participants ? exp.participants.length : 1;
+                const perPerson = Math.round(exp.amount / splitCount);
+                const splitText = exp.participants ? `💸 ${exp.payer} 墊 / ${exp.participants.length}人分 (每人 ¥${perPerson})` : exp.payer;
 
                 return `
                     <div class="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition group relative">
@@ -342,22 +442,33 @@
                                 </div>
                                 <div class="min-w-0">
                                     <h4 class="font-bold text-base truncate">${exp.title}</h4>
-                                    <p class="text-[10px] text-text-sub-light">${exp.payer} · ${new Date(exp.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <p class="text-[10px] text-text-sub-light truncate">${exp.method || '現金'} · ${splitText}</p>
                                 </div>
                             </div>
-                            <div class="text-right">
+                            <div class="text-right flex flex-col items-end">
                                 <p class="font-black text-lg text-primary">¥ ${exp.amount.toLocaleString()}</p>
-                                <p class="text-[10px] text-text-sub-light">${exp.category}</p>
+                                <p class="text-[10px] text-text-sub-light">≈ NT$ ${(exp.amountTwd || 0).toLocaleString()}</p>
+                                ${exp.url ? `
+                                    <a href="${exp.url}" target="_blank" class="mt-2 text-primary flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-xs">link</span>
+                                        <span class="text-[10px] font-bold">查看網址</span>
+                                    </a>
+                                ` : ''}
                             </div>
                         </div>
-                        <button onclick="deleteExpense(${exp.id})" class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg">
+                        ${exp.desc ? `
+                            <div class="mt-3 pt-3 border-t border-gray-50 dark:border-white/5 text-[11px] text-text-sub-light italic leading-relaxed whitespace-pre-wrap">
+                                ${exp.desc}
+                            </div>
+                        ` : ''}
+                        <button onclick="deleteExpense(${exp.id})" class="absolute -top-1 -right-1 size-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg z-10">
                             <span class="material-symbols-outlined text-xs">close</span>
                         </button>
                     </div>
                 `;
             }).join('');
 
-            totalDisplay.innerText = `¥ ${total.toLocaleString()}`;
+            totalDisplay.innerHTML = `<div>¥ ${totalJpy.toLocaleString()}</div><div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>`;
 
             catSummary.innerHTML = Object.entries(cats).map(([cat, amt]) => `
                 <div class="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1 shrink-0">
@@ -365,6 +476,78 @@
                     <span class="text-[10px] font-black">¥${amt.toLocaleString()}</span>
                 </div>
             `).join('');
+
+            calculateSettlement();
+        }
+
+        function calculateSettlement() {
+            if (!currentTrip || !currentTrip.expenses) return;
+
+            const balances = {};
+            const members = currentTrip.members || [getUserName()];
+            members.forEach(m => balances[m] = 0);
+
+            currentTrip.expenses.forEach(exp => {
+                const amount = exp.amount;
+                const payer = exp.payer;
+                const participants = exp.participants || [payer];
+
+                // Payer gets back the amount they paid
+                balances[payer] = (balances[payer] || 0) + amount;
+
+                // Each participant owes their share
+                const share = amount / participants.length;
+                participants.forEach(p => {
+                    balances[p] = (balances[p] || 0) - share;
+                });
+            });
+
+            const settlementSection = document.getElementById('settlement-section');
+            const settlementList = document.getElementById('settlement-list');
+
+            const creditors = [];
+            const debtors = [];
+
+            for (const [name, balance] of Object.entries(balances)) {
+                if (balance > 1) creditors.push({ name, balance });
+                else if (balance < -1) debtors.push({ name, balance: -balance });
+            }
+
+            // Simple debt settlement algorithm
+            const transactions = [];
+            creditors.sort((a, b) => b.balance - a.balance);
+            debtors.sort((a, b) => b.balance - a.balance);
+
+            let i = 0, j = 0;
+            while (i < creditors.length && j < debtors.length) {
+                const amount = Math.min(creditors[i].balance, debtors[j].balance);
+                transactions.push({ from: debtors[j].name, to: creditors[i].name, amount: Math.round(amount) });
+
+                creditors[i].balance -= amount;
+                debtors[j].balance -= amount;
+
+                if (creditors[i].balance < 1) i++;
+                if (debtors[j].balance < 1) j++;
+            }
+
+            if (transactions.length > 0) {
+                settlementSection.classList.remove('hidden');
+                settlementList.innerHTML = transactions.map(t => `
+                    <div class="bg-primary/5 border border-primary/10 p-3 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-sm">${t.from}</span>
+                            <span class="material-symbols-outlined text-xs text-text-sub-light">arrow_forward</span>
+                            <span class="font-bold text-sm">${t.to}</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-black text-primary text-base">¥ ${t.amount.toLocaleString()}</p>
+                            <p class="text-[10px] text-text-sub-light">≈ NT$ ${Math.round(t.amount * exchangeRate).toLocaleString()}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                settlementSection.classList.add('hidden');
+            }
         }
 
         function getCatIcon(cat) {
