@@ -491,11 +491,15 @@
                 };
                 const tagIcon = iconMap[tag] || 'push_pin';
 
+                const imageBoxClass = image ? 'w-20 h-20' : 'w-12 h-12';
+                const iconSize = image ? 'text-3xl' : 'text-xl';
+                const tagFontSize = image ? 'text-[8px]' : 'text-[7px]';
+
                 const imageRender = image ?
                     `<img src="${image}" class="h-full w-full object-cover" />` :
                     `<div class="h-full w-full bg-primary/10 dark:bg-primary/20 flex flex-col items-center justify-center text-primary opacity-60">
-                        <span class="material-symbols-outlined text-3xl">${tagIcon}</span>
-                        <span class="text-[8px] font-bold mt-1 uppercase">${tag}</span>
+                        <span class="material-symbols-outlined ${iconSize}">${tagIcon}</span>
+                        <span class="${tagFontSize} font-bold mt-0.5 uppercase">${tag}</span>
                     </div>`;
 
                 html += `
@@ -504,12 +508,12 @@
                     <div class="mb-1 flex items-center gap-2">
                         <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">${item.time}</span>
                     </div>
-                    <div class="flex gap-4 overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-transparent hover:border-primary/20 transition-all p-3 pr-4 cursor-pointer" onclick="editItem(${item.id})">
-                        <div class="relative aspect-square w-20 shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-black/20">
+                    <div class="flex gap-2 overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-transparent hover:border-primary/20 transition-all p-2 pr-3 cursor-pointer" onclick="editItem(${item.id})">
+                        <div class="relative shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-black/20 ${imageBoxClass}">
                              ${imageRender}
                         </div>
-                        <div class="flex flex-col justify-center min-w-0 flex-1">
-                            <h3 class="text-base font-bold text-text-main-light dark:text-text-main-dark">${item.name}</h3>
+                        <div class="flex flex-col justify-center min-w-0 flex-1 py-1">
+                            <h3 class="text-base font-bold text-text-main-light dark:text-text-main-dark break-words leading-tight">${item.name}</h3>
                             <p class="text-xs text-text-sub-light dark:text-text-sub-dark mt-1 whitespace-pre-wrap">${item.desc || '無備註'}</p>
                             <div class="flex items-center gap-2 mt-2">
                                 <span class="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">${tag}</span>
