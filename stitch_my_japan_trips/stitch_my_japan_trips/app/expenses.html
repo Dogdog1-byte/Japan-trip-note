@@ -68,7 +68,13 @@
                 </div>
                 <div id="exchange-rate-info"
                     class="mt-4 pt-4 border-t border-white/20 text-[10px] font-bold opacity-80 flex justify-between items-center">
-                    <span>匯率更新：<span id="rate-time">載入中...</span></span>
+                    <div class="flex items-center gap-1">
+                        <span>匯率更新：<span id="rate-time">載入中...</span></span>
+                        <button onclick="window.fetchExchangeRate()"
+                            class="hover:rotate-180 transition-transform duration-500 flex items-center">
+                            <span class="material-symbols-outlined text-[14px]">refresh</span>
+                        </button>
+                    </div>
                     <span>1 JPY ≈ <span id="jpy-twd-rate">...</span> TWD</span>
                 </div>
             </div>
@@ -242,7 +248,7 @@
         let exchangeRate = 0.22; // Default fallback
         let rateLastUpdated = "";
 
-        async function fetchExchangeRate() {
+        window.fetchExchangeRate = async function () {
             try {
                 const res = await fetch('https://open.er-api.com/v6/latest/JPY');
                 const data = await res.json();
@@ -269,9 +275,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            fetchExchangeRate();
+            window.fetchExchangeRate();
             const isConfigured = initApp();
-            // ... (rest of old initApp logic) ...
+            if (!isConfigured) {
+                location.href = 'trips.html';
+                return;
+            }
             syncTripsList((trips) => {
                 allTrips = trips;
                 const select = document.getElementById('tripSelect');
@@ -353,9 +362,12 @@
         window.closeModal = function () {
             const modalOverlay = document.getElementById('modal-overlay');
             const modalContent = document.getElementById('modal-content');
-            modalOverlay.classList.add('opacity-0');
-            modalContent.classList.add('translate-y-full');
-            setTimeout(() => modalOverlay.classList.add('hidden'), 300);
+            if (modalOverlay) modalOverlay.classList.add('opacity-0');
+            if (modalContent) modalContent.classList.add('translate-y-full');
+            setTimeout(() => {
+                if (modalOverlay) modalOverlay.classList.add('hidden');
+                document.body.style.overflow = ''; // Restore scroll
+            }, 300);
         }
 
         window.handleFormSubmit = function (e) {
@@ -365,6 +377,11 @@
             const amountJpy = parseInt(document.getElementById('expAmount').value);
             const participants = Array.from(document.querySelectorAll('input[name="participant"]:checked')).map(i => i.value);
             const payer = document.getElementById('expPayer').value;
+
+            if (isNaN(amountJpy) || amountJpy <= 0) {
+                alert("請輸入正確金額");
+                return;
+            }
 
             if (participants.length === 0) {
                 alert("請至少選擇一位分帳成員");
@@ -395,9 +412,20 @@
 
         window.deleteExpense = function (expId) {
             if (!confirm('確定刪除這筆支出嗎？')) return;
-            currentTrip.expenses = currentTrip.expenses.filter(e => e.id != expId);
-            updateTrip(currentTrip);
+
+            // Generate a filtered array (Firebase sometimes returns objects, but locally we use arrays)
+            const expensesArray = Array.isArray(currentTrip.expenses)
+                ? currentTrip.expenses
+                : Object.values(currentTrip.expenses || {});
+
+            const newExpenses = expensesArray.filter(e => e.id != expId);
+            currentTrip.expenses = newExpenses;
+
+            // Update UI immediately (Optimistic UI)
             renderExpenses();
+
+            // Sync to Firebase
+            updateTrip(currentTrip);
         }
 
         function renderExpenses() {
@@ -407,7 +435,12 @@
             const summaryCard = document.getElementById('summary-card');
             const empty = document.getElementById('empty-expenses');
 
-            if (!currentTrip || !currentTrip.expenses || currentTrip.expenses.length === 0) {
+            if (!currentTrip) return;
+
+            const rawExpenses = currentTrip.expenses || [];
+            const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
+
+            if (expensesArray.length === 0) {
                 container.innerHTML = '';
                 container.appendChild(empty);
                 summaryCard.classList.add('hidden');
@@ -418,7 +451,7 @@
             summaryCard.classList.remove('hidden');
             empty.classList.add('hidden');
 
-            const expenses = [...currentTrip.expenses].sort((a, b) => b.id - a.id);
+            const expenses = [...expensesArray].sort((a, b) => b.id - a.id);
 
             let totalJpy = 0;
             let totalTwd = 0;
@@ -487,7 +520,10 @@
             const members = currentTrip.members || [getUserName()];
             members.forEach(m => balances[m] = 0);
 
-            currentTrip.expenses.forEach(exp => {
+            const rawExpenses = currentTrip.expenses || [];
+            const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
+
+            expensesArray.forEach(exp => {
                 const amount = exp.amount;
                 const payer = exp.payer;
                 const participants = exp.participants || [payer];
