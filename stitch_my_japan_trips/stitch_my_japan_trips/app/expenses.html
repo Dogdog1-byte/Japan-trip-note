@@ -186,24 +186,14 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">付款人</label>
+                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light uppercase">付款人</label>
                         <select id="expPayer"
                             class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-sm font-bold focus:ring-1 focus:ring-primary">
                             <!-- Members Injected Here -->
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">分帳成員</label>
-                        <div id="split-participants"
-                            class="flex flex-col gap-1 bg-gray-50 dark:bg-black/20 rounded-xl p-1.5 max-h-24 overflow-y-auto">
-                            <!-- Participant Checkboxes Injected Here -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">支付方式</label>
+                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light uppercase">支付方式</label>
                         <select id="expMethod"
                             class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-sm font-bold focus:ring-1 focus:ring-primary">
                             <option value="現金">💵 現金</option>
@@ -211,15 +201,24 @@
                             <option value="其他">🔘 其他</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">備註 (選填)</label>
-                        <textarea id="expDesc" placeholder="備註..." rows="1"
-                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-primary resize-none min-h-[42px]"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light uppercase">分帳成員</label>
+                    <div id="split-participants"
+                        class="flex flex-wrap gap-2 bg-gray-50 dark:bg-black/20 rounded-xl p-2.5 min-h-[44px]">
+                        <!-- Participant Checkboxes Injected Here -->
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">參考網址 (選填)</label>
+                    <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light uppercase">備註 (選填)</label>
+                    <textarea id="expDesc" placeholder="輸入備註內容..." rows="2"
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-sm focus:ring-1 focus:ring-primary resize-none min-h-[60px]"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light uppercase">參考網址 (選填)</label>
                     <input type="url" id="expUrl" placeholder="https://..."
                         class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-primary">
                 </div>
@@ -339,9 +338,10 @@
                 // Update Split Checkboxes
                 const container = document.getElementById('split-participants');
                 container.innerHTML = members.map(m => `
-                    <label class="flex items-center gap-2 p-1.5 hover:bg-white/50 rounded-lg cursor-pointer transition">
-                        <input type="checkbox" name="participant" value="${m}" checked class="rounded border-gray-300 text-primary focus:ring-primary size-4">
-                        <span class="text-xs font-bold truncate">${m}</span>
+                    <label class="flex items-center gap-1.5 bg-white dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-white/10 cursor-pointer active:scale-95 transition-transform">
+                        <input type="checkbox" name="participant" value="${m}" checked 
+                            class="rounded text-primary focus:ring-primary size-3.5">
+                        <span class="text-xs font-bold">${m}</span>
                     </label>
                 `).join('');
 
@@ -349,7 +349,7 @@
                 const payerSelect = document.getElementById('expPayer');
                 const oldPayer = payerSelect.value;
                 payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
-                if (members.includes(oldPayer)) {
+                if (oldPayer && members.includes(oldPayer)) {
                     payerSelect.value = oldPayer;
                 } else {
                     payerSelect.value = getUserName();
