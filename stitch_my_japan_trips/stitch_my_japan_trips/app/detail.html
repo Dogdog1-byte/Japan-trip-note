@@ -200,6 +200,11 @@
                     <span class="material-symbols-outlined">checklist</span>
                     <span class="text-[10px] font-medium">待辦</span>
                 </a>
+                <a href="expenses.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">payments</span>
+                    <span class="text-[10px] font-medium">記帳</span>
+                </a>
                 <a href="settings.html"
                     class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
                     <span class="material-symbols-outlined">settings</span>
@@ -451,7 +456,22 @@
             let html = '<div class="absolute bottom-0 left-[23px] top-2 w-0.5 bg-gray-200 dark:bg-gray-800"></div>';
             items.forEach((item, index) => {
                 const tag = item.tag || '一般';
-                const image = item.image || getDefaultImage(tag);
+                const image = item.image;
+                const iconMap = {
+                    '景點': 'landscape',
+                    '美食': 'restaurant',
+                    '交通': 'directions_transit',
+                    '住宿': 'hotel',
+                    '購物': 'shopping_bag'
+                };
+                const tagIcon = iconMap[tag] || 'push_pin';
+
+                const imageRender = image ?
+                    `<img src="${image}" class="h-full w-full object-cover" />` :
+                    `<div class="h-full w-full bg-primary/10 dark:bg-primary/20 flex flex-col items-center justify-center text-primary opacity-60">
+                        <span class="material-symbols-outlined text-3xl">${tagIcon}</span>
+                        <span class="text-[8px] font-bold mt-1 uppercase">${tag}</span>
+                    </div>`;
 
                 html += `
                 <div class="relative mb-6 pl-8 group">
@@ -459,9 +479,9 @@
                     <div class="mb-1 flex items-center gap-2">
                         <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">${item.time}</span>
                     </div>
-                    <div class="flex gap-4 overflow-hidden rounded-2xl bg-card-light dark:bg-card-dark shadow-soft p-3 pr-4 transition-transform border border-transparent hover:border-primary/30 cursor-pointer" onclick="editItem(${item.id})">
-                        <div class="relative aspect-square w-20 shrink-0 rounded-xl overflow-hidden bg-gray-200">
-                             <img src="${image}" class="h-full w-full object-cover" />
+                    <div class="flex gap-4 overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-transparent hover:border-primary/20 transition-all p-3 pr-4 cursor-pointer" onclick="editItem(${item.id})">
+                        <div class="relative aspect-square w-20 shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-black/20">
+                             ${imageRender}
                         </div>
                         <div class="flex flex-col justify-center min-w-0 flex-1">
                             <h3 class="text-base font-bold text-text-main-light dark:text-text-main-dark truncate">${item.name}</h3>

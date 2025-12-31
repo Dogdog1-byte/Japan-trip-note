@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>旅程記帳 (即時同步)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2563EB",
+                        "primary-content": "#ffffff",
+                        "background-light": "#eff6ff",
+                        "background-dark": "#0f172a",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b",
+                        "text-main-light": "#1e293b",
+                        "text-main-dark": "#f8fafc",
+                        "text-sub-light": "#64748b",
+                        "text-sub-dark": "#94a3b8",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans TC", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "1.5rem", "xl": "2rem", "2xl": "2.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark min-h-screen text-text-main-light dark:text-text-main-dark flex justify-center">
+    <div
+        class="relative flex h-full min-h-screen w-full max-w-md flex-col overflow-x-hidden bg-background-light dark:bg-background-dark pb-24">
+
+        <!-- Header -->
+        <header
+            class="sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm px-6 pt-10 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <h1 class="text-3xl font-extrabold tracking-tight">旅程記帳</h1>
+            <p id="current-trip-name" class="text-sm text-primary font-bold mt-1">請選擇行程</p>
+        </header>
+
+        <main class="flex-1 px-4 pt-6">
+            <!-- Summary Card -->
+            <div id="summary-card"
+                class="bg-primary text-primary-content p-6 rounded-3xl shadow-lg shadow-primary/20 mb-8 transition-all hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-xs font-bold opacity-80 uppercase tracking-wider">總支出</p>
+                        <h2 id="total-amount" class="text-4xl font-black mt-1">¥ 0</h2>
+                    </div>
+                    <span class="material-symbols-outlined text-3xl opacity-50">payments</span>
+                </div>
+                <div id="category-summary" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                    <!-- Categories -->
+                </div>
+            </div>
+
+            <!-- Trip Selector (if needed) -->
+            <div id="trip-selector" class="mb-6">
+                <label class="block text-xs font-bold mb-2 ml-1 text-text-sub-light">選擇行程查看帳目</label>
+                <select id="tripSelect"
+                    class="w-full bg-white dark:bg-surface-dark border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary font-bold">
+                    <option value="">-- 請選擇行程 --</option>
+                </select>
+            </div>
+
+            <!-- Expense List -->
+            <div id="expenses-container" class="space-y-4">
+                <!-- Expenses Injected Here -->
+                <div id="empty-expenses" class="text-center py-20 opacity-40 italic">
+                    <span class="material-symbols-outlined text-6xl mb-4">receipt_long</span>
+                    <p>尚未有任何支出紀錄</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- FAB -->
+        <div class="fixed bottom-24 right-5 z-40">
+            <button id="addExpenseBtn" onclick="openModal()" disabled
+                class="flex size-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg shadow-primary/30 transition hover:scale-105 active:scale-95 disabled:grayscale disabled:opacity-50">
+                <span class="material-symbols-outlined" style="font-size: 28px;">add</span>
+            </button>
+        </div>
+
+        <!-- Add Expense Modal -->
+        <div id="modal-overlay"
+            class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"
+            onclick="closeModal()"></div>
+        <div id="modal-content"
+            class="fixed bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto max-w-md mx-auto">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+
+            <h3 class="text-xl font-bold mb-6">新增支出</h3>
+
+            <form id="expenseForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">金額 (¥)</label>
+                        <input type="number" id="expAmount" required placeholder="0"
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-lg font-bold focus:ring-1 focus:ring-primary">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">類別</label>
+                        <select id="expCategory"
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 font-medium focus:ring-1 focus:ring-primary">
+                            <option value="美食">🍜 美食</option>
+                            <option value="交通">🚄 交通</option>
+                            <option value="購物">🛍️ 購物</option>
+                            <option value="景點">🗻 景點</option>
+                            <option value="住宿">🏨 住宿</option>
+                            <option value="其他">📦 其他</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">支出名稱</label>
+                    <input type="text" id="expTitle" required placeholder="例如：一蘭拉麵"
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">備註 (選填)</label>
+                    <input type="text" id="expDesc" placeholder="刷卡或是付現..."
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform">
+                        儲存支出
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav
+            class="fixed bottom-0 z-30 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 pb-safe pt-2">
+            <div class="flex justify-around items-center h-16 px-2">
+                <a href="trips.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="text-[10px] font-medium">首頁</span>
+                </a>
+                <a href="checklist.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">checklist</span>
+                    <span class="text-[10px] font-medium">待辦</span>
+                </a>
+                <a href="expenses.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-primary">
+                    <span class="material-symbols-outlined font-variation-settings-fill">payments</span>
+                    <span class="text-[10px] font-bold">記帳</span>
+                </a>
+                <a href="settings.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="text-[10px] font-medium">設定</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Firebase Manager & Logic -->
+    <script type="module">
+        import { initApp, syncTripsList, updateTrip, getUserName } from './firebase-manager.js';
+
+        let allTrips = [];
+        let currentTripId = null;
+        let currentTrip = null;
+
+        // Auto Dark Mode
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isConfigured = initApp();
+            if (!isConfigured) {
+                location.href = 'trips.html';
+                return;
+            }
+
+            // Listen to trips list to populate selector
+            syncTripsList((trips) => {
+                allTrips = trips;
+                const select = document.getElementById('tripSelect');
+                const oldVal = select.value;
+                select.innerHTML = '<option value="">-- 請選擇行程 --</option>';
+
+                trips.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.innerText = t.name;
+                    select.appendChild(opt);
+                });
+
+                if (oldVal && trips.find(t => t.id == oldVal)) {
+                    select.value = oldVal;
+                } else if (trips.length > 0 && !oldVal) {
+                    // Auto select first if only 1?
+                }
+            });
+
+            document.getElementById('tripSelect').addEventListener('change', (e) => {
+                const id = e.target.value;
+                currentTripId = id;
+                if (!id) {
+                    currentTrip = null;
+                    renderExpenses();
+                    document.getElementById('addExpenseBtn').disabled = true;
+                    document.getElementById('summary-card').classList.add('hidden');
+                    document.getElementById('current-trip-name').innerText = "請選擇行程";
+                    return;
+                }
+
+                currentTrip = allTrips.find(t => t.id == id);
+                document.getElementById('addExpenseBtn').disabled = false;
+                document.getElementById('current-trip-name').innerText = currentTrip.name;
+                renderExpenses();
+            });
+        });
+
+        window.openModal = function () {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContent = document.getElementById('modal-content');
+            modalOverlay.classList.remove('hidden');
+            void modalOverlay.offsetWidth;
+            modalOverlay.classList.remove('opacity-0');
+            modalContent.classList.remove('translate-y-full');
+            document.getElementById('expenseForm').reset();
+        }
+
+        window.closeModal = function () {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContent = document.getElementById('modal-content');
+            modalOverlay.classList.add('opacity-0');
+            modalContent.classList.add('translate-y-full');
+            setTimeout(() => modalOverlay.classList.add('hidden'), 300);
+        }
+
+        window.handleFormSubmit = function (e) {
+            e.preventDefault();
+            if (!currentTrip) return;
+
+            const expense = {
+                id: Date.now(),
+                amount: parseInt(document.getElementById('expAmount').value),
+                category: document.getElementById('expCategory').value,
+                title: document.getElementById('expTitle').value,
+                desc: document.getElementById('expDesc').value,
+                payer: getUserName(),
+                time: new Date().toISOString()
+            };
+
+            if (!currentTrip.expenses) currentTrip.expenses = [];
+            currentTrip.expenses.push(expense);
+
+            updateTrip(currentTrip);
+            renderExpenses();
+            window.closeModal();
+        }
+
+        window.deleteExpense = function (expId) {
+            if (!confirm('確定刪除這筆支出嗎？')) return;
+            currentTrip.expenses = currentTrip.expenses.filter(e => e.id != expId);
+            updateTrip(currentTrip);
+            renderExpenses();
+        }
+
+        function renderExpenses() {
+            const container = document.getElementById('expenses-container');
+            const totalDisplay = document.getElementById('total-amount');
+            const catSummary = document.getElementById('category-summary');
+            const summaryCard = document.getElementById('summary-card');
+            const empty = document.getElementById('empty-expenses');
+
+            if (!currentTrip || !currentTrip.expenses || currentTrip.expenses.length === 0) {
+                container.innerHTML = '';
+                container.appendChild(empty);
+                summaryCard.classList.add('hidden');
+                return;
+            }
+
+            summaryCard.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            // Sort by time desc
+            const expenses = [...currentTrip.expenses].sort((a, b) => b.id - a.id);
+
+            let total = 0;
+            const cats = {};
+
+            container.innerHTML = expenses.map(exp => {
+                total += exp.amount;
+                cats[exp.category] = (cats[exp.category] || 0) + exp.amount;
+
+                return `
+                    <div class="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition group relative">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined text-xl">${getCatIcon(exp.category)}</span>
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-base truncate">${exp.title}</h4>
+                                    <p class="text-[10px] text-text-sub-light">${exp.payer} · ${new Date(exp.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-black text-lg text-primary">¥ ${exp.amount.toLocaleString()}</p>
+                                <p class="text-[10px] text-text-sub-light">${exp.category}</p>
+                            </div>
+                        </div>
+                        <button onclick="deleteExpense(${exp.id})" class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg">
+                            <span class="material-symbols-outlined text-xs">close</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            totalDisplay.innerText = `¥ ${total.toLocaleString()}`;
+
+            catSummary.innerHTML = Object.entries(cats).map(([cat, amt]) => `
+                <div class="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1 shrink-0">
+                    <span class="text-[10px] font-bold">${cat}</span>
+                    <span class="text-[10px] font-black">¥${amt.toLocaleString()}</span>
+                </div>
+            `).join('');
+        }
+
+        function getCatIcon(cat) {
+            const map = {
+                '美食': 'restaurant',
+                '交通': 'directions_transit',
+                '購物': 'shopping_bag',
+                '景點': 'landscape',
+                '住宿': 'hotel',
+                '其他': 'box'
+            };
+            return map[cat] || 'payments';
+        }
+    </script>
+</body>
+
+</html>
