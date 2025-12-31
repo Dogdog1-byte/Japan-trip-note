@@ -52,8 +52,13 @@
                 class="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition">
                 <span class="material-symbols-outlined">arrow_back</span>
             </button>
-            <div class="flex-1 text-center mx-2">
-                <h1 id="header-title" class="text-lg font-bold truncate">載入中...</h1>
+            <div class="flex-1 flex flex-col items-center mx-2 overflow-hidden">
+                <button onclick="editTripName()"
+                    class="flex items-center gap-1 max-w-full hover:opacity-70 transition group">
+                    <h1 id="header-title" class="text-lg font-bold truncate">載入中...</h1>
+                    <span
+                        class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-50 transition">edit</span>
+                </button>
                 <p id="trip-date-display"
                     class="text-xs text-text-sub-light dark:text-text-sub-dark flex items-center justify-center gap-1">
                     ...
@@ -357,6 +362,16 @@
         window.shareTrip = function () {
             const groupId = getGroupId();
             alert(`目前位於群組：${groupId}\n請朋友在首頁輸入此 ID 即可同步編輯。`);
+        }
+
+        window.editTripName = function () {
+            if (!currentTrip) return;
+            const newName = prompt("請輸入新的行程名稱：", currentTrip.name);
+            if (newName && newName.trim()) {
+                currentTrip.name = newName.trim();
+                saveTrip();
+                renderAll();
+            }
         }
 
         // --- Core Rendering ---
