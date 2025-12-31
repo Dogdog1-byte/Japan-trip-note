@@ -89,6 +89,27 @@
                 </div>
             </div>
 
+            <div
+                class="space-y-4 bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                <div class="flex items-center justify-between">
+                    <label class="block text-sm font-bold text-text-main-light dark:text-text-main-dark">旅行人數</label>
+                    <div class="flex items-center gap-4 bg-gray-50 dark:bg-black/20 rounded-full px-4 py-2">
+                        <button onclick="changeTravelers(-1)"
+                            class="text-primary font-black text-xl hover:opacity-70">-</button>
+                        <span id="travelerCount" class="font-bold text-lg min-w-8 text-center">1</span>
+                        <button onclick="changeTravelers(1)"
+                            class="text-primary font-black text-xl hover:opacity-70">+</button>
+                    </div>
+                </div>
+
+                <div id="membersContainer" class="space-y-3">
+                    <label class="block text-xs font-bold text-text-sub-light">成員暱稱</label>
+                    <input type="text"
+                        class="member-nickname w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary"
+                        placeholder="成員 1 暱稱">
+                </div>
+            </div>
+
             <div class="space-y-2">
                 <label class="block text-sm font-bold text-text-main-light dark:text-text-main-dark">封面圖片 (選填)</label>
                 <!-- Simplified Image Selection -->
@@ -152,6 +173,29 @@
             document.getElementById('endDate').value = today;
         });
 
+        window.changeTravelers = function (delta) {
+            const countEl = document.getElementById('travelerCount');
+            let count = parseInt(countEl.innerText) + delta;
+            if (count < 1) count = 1;
+            if (count > 20) count = 20;
+            countEl.innerText = count;
+
+            updateMemberInputs(count);
+        };
+
+        function updateMemberInputs(count) {
+            const container = document.getElementById('membersContainer');
+            // Keep current values
+            const currentNicknames = Array.from(document.querySelectorAll('.member-nickname')).map(input => input.value);
+
+            let html = '<label class="block text-xs font-bold text-text-sub-light">成員暱稱</label>';
+            for (let i = 0; i < count; i++) {
+                const val = currentNicknames[i] || '';
+                html += `<input type="text" class="member-nickname w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary" placeholder="成員 ${i + 1} 暱稱" value="${val}">`;
+            }
+            container.innerHTML = html;
+        }
+
         window.selectImage = function (btn, url) {
             document.querySelectorAll('.image-option').forEach(b => b.classList.remove('border-primary'));
             btn.classList.add('border-primary');
@@ -170,10 +214,15 @@
             if (!name) return alert('請輸入行程名稱');
             if (new Date(end) < new Date(start)) return alert('結束日期不能早於出發日期');
 
+            const nicknames = Array.from(document.querySelectorAll('.member-nickname'))
+                .map(input => input.value.trim())
+                .filter(name => name !== '');
+
             const newTrip = {
                 id: Date.now(),
                 name, dest, start, end,
                 image,
+                members: nicknames.length > 0 ? nicknames : null,
                 status: 'planning',
                 tag: '規劃中',
                 itinerary: {}

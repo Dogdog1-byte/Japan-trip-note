@@ -63,6 +63,10 @@
                     class="text-xs text-text-sub-light dark:text-text-sub-dark flex items-center justify-center gap-1">
                     ...
                 </p>
+                <button onclick="editMembers()" id="members-display"
+                    class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full mt-1 font-bold hover:bg-primary/20 transition">
+                    👥 設定成員
+                </button>
             </div>
             <button onclick="shareTrip()"
                 class="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition text-primary">
@@ -373,6 +377,18 @@
             window.closeModal();
         }
 
+        window.editMembers = function () {
+            if (!currentTrip) return;
+            const currentMembers = currentTrip.members ? currentTrip.members.join(', ') : '';
+            const input = prompt("請輸入所有成員暱稱，用逗號隔開：\n(例如：爸爸, 媽媽, 我)", currentMembers);
+            if (input !== null) {
+                const nicknames = input.split(',').map(s => s.trim()).filter(s => s !== '');
+                currentTrip.members = nicknames.length > 0 ? nicknames : null;
+                saveTrip();
+                renderAll();
+            }
+        }
+
         window.shareTrip = function () {
             const groupId = getGroupId();
             alert(`目前位於群組：${groupId}\n請朋友在首頁輸入此 ID 即可同步編輯。`);
@@ -392,6 +408,14 @@
 
         function renderAll() {
             document.getElementById('header-title').innerText = currentTrip.name;
+
+            // Render Members
+            const membersEl = document.getElementById('members-display');
+            if (currentTrip.members && currentTrip.members.length > 0) {
+                membersEl.innerText = `👥 ${currentTrip.members.join(', ')}`;
+            } else {
+                membersEl.innerText = `👥 設定成員`;
+            }
 
             // Show Last Editor Info
             if (currentTrip.lastEditor) {

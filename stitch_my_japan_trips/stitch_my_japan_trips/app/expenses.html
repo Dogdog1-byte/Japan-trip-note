@@ -133,6 +133,14 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">付款人</label>
+                    <select id="expPayer"
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
+                        <!-- Members Injected Here -->
+                    </select>
+                </div>
+
+                <div>
                     <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">備註 (選填)</label>
                     <input type="text" id="expDesc" placeholder="刷卡或是付現..."
                         class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
@@ -211,10 +219,23 @@
 
                 if (oldVal && trips.find(t => t.id == oldVal)) {
                     select.value = oldVal;
-                } else if (trips.length > 0 && !oldVal) {
-                    // Auto select first if only 1?
+                    // Real-time update members/expenses if they changed
+                    currentTrip = trips.find(t => t.id == oldVal);
+                    updatePayerList();
+                    renderExpenses();
                 }
             });
+
+            function updatePayerList() {
+                if (!currentTrip) return;
+                const payerSelect = document.getElementById('expPayer');
+                const oldPayer = payerSelect.value;
+                const members = currentTrip.members || [getUserName()];
+                payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
+                if (members.includes(oldPayer)) {
+                    payerSelect.value = oldPayer;
+                }
+            }
 
             document.getElementById('tripSelect').addEventListener('change', (e) => {
                 const id = e.target.value;
@@ -231,6 +252,8 @@
                 currentTrip = allTrips.find(t => t.id == id);
                 document.getElementById('addExpenseBtn').disabled = false;
                 document.getElementById('current-trip-name').innerText = currentTrip.name;
+
+                updatePayerList();
                 renderExpenses();
             });
         });
@@ -263,7 +286,7 @@
                 category: document.getElementById('expCategory').value,
                 title: document.getElementById('expTitle').value,
                 desc: document.getElementById('expDesc').value,
-                payer: getUserName(),
+                payer: document.getElementById('expPayer').value,
                 time: new Date().toISOString()
             };
 
