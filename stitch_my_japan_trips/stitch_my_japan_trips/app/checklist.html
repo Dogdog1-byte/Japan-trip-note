@@ -19,9 +19,9 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#2563EB",
+                        "primary": "var(--primary-color, #2563EB)",
                         "primary-content": "#ffffff",
-                        "background-light": "#eff6ff",
+                        "background-light": "var(--background-light-color, #eff6ff)",
                         "background-dark": "#0f172a",
                         "surface-light": "#ffffff",
                         "surface-dark": "#1e293b",
@@ -144,8 +144,9 @@
         </nav>
     </div>
 
-    <script>
-        // Default checklist items
+    <script type="module">
+        import './theme-manager.js';
+
         const defaultItems = {
             'before-trip': [
                 { text: '確認護照效期（需6個月以上）', done: false },
@@ -227,13 +228,13 @@
             `).join('');
         }
 
-        function toggleItem(category, index) {
+        window.toggleItem = function (category, index) {
             checklist[category][index].done = !checklist[category][index].done;
             saveChecklist();
             renderList(category);
         }
 
-        function deleteItem(category, index) {
+        window.deleteItem = function (category, index) {
             if (confirm('確定要刪除此項目？')) {
                 checklist[category].splice(index, 1);
                 saveChecklist();
@@ -241,7 +242,7 @@
             }
         }
 
-        function addItem(category) {
+        window.addItem = function (category) {
             const text = prompt('請輸入待辦事項：');
             if (text && text.trim()) {
                 if (!checklist[category]) checklist[category] = [];

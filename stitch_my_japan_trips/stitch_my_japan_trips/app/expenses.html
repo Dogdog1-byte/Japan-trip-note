@@ -19,9 +19,9 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#2563EB",
+                        "primary": "var(--primary-color, #2563EB)",
                         "primary-content": "#ffffff",
-                        "background-light": "#eff6ff",
+                        "background-light": "var(--background-light-color, #eff6ff)",
                         "background-dark": "#0f172a",
                         "surface-light": "#ffffff",
                         "surface-dark": "#1e293b",
@@ -183,8 +183,9 @@
         </nav>
     </div>
 
-    <!-- Firebase Manager & Logic -->
+    <!-- Theme & Firebase Logic -->
     <script type="module">
+        import './theme-manager.js';
         import { initApp, syncTripsList, updateTrip, getUserName } from './firebase-manager.js';
 
         let allTrips = [];

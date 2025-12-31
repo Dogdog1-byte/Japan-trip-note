@@ -14,14 +14,19 @@
         rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
+        const getStoredTheme = () => ({
+            primary: localStorage.getItem('theme_primary') || '#2563EB',
+            bgLight: localStorage.getItem('theme_background_light') || '#eff6ff'
+        });
+
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#2563EB",
+                        "primary": "var(--primary-color, #2563EB)",
                         "primary-content": "#ffffff",
-                        "background-light": "#eff6ff",
+                        "background-light": "var(--background-light-color, #eff6ff)",
                         "background-dark": "#0f172a",
                         "surface-light": "#ffffff",
                         "surface-dark": "#1e293b",
@@ -83,9 +88,34 @@
                 </div>
             </div>
 
-            <!-- General Settings -->
-            <div class="space-y-2">
-                <h2 class="text-sm font-bold text-text-sub-light dark:text-text-sub-dark px-2">一般設定</h2>
+            <!-- Theme Settings -->
+            <div class="space-y-3">
+                <h2 class="text-sm font-bold text-text-sub-light dark:text-text-sub-dark px-2">主題個性化</h2>
+
+                <div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-4 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">palette</span>
+                            <span class="font-medium">主色調</span>
+                        </div>
+                        <input type="color" id="primaryColorPicker" onchange="updateThemeColors()"
+                            class="w-10 h-10 rounded-lg border-none p-0 cursor-pointer overflow-hidden">
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">format_paint</span>
+                            <span class="font-medium">背景色</span>
+                        </div>
+                        <input type="color" id="bgColorPicker" onchange="updateThemeColors()"
+                            class="w-10 h-10 rounded-lg border-none p-0 cursor-pointer overflow-hidden">
+                    </div>
+
+                    <button onclick="resetTheme()"
+                        class="w-full py-2 text-xs font-bold text-text-sub-light hover:text-primary transition border-t border-gray-100 dark:border-gray-800 pt-3">
+                        恢復預設顏色
+                    </button>
+                </div>
 
                 <button onclick="toggleDarkMode()"
                     class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
@@ -145,12 +175,14 @@
         </nav>
     </div>
 
-    <!-- Firebase Logic -->
+    <!-- Theme & Firebase Logic -->
     <script type="module">
+        import { initTheme, applyTheme, getTheme } from './theme-manager.js';
         import { initApp, getUserName, getGroupId } from './firebase-manager.js';
 
         document.addEventListener('DOMContentLoaded', () => {
             initApp();
+            initTheme();
 
             // Auto Dark Mode setup
             const darkMode = localStorage.getItem('darkMode') === 'true';
@@ -159,8 +191,27 @@
                 document.getElementById('darkModeToggle').checked = true;
             }
 
+            // Theme Color setup
+            const theme = getTheme();
+            document.getElementById('primaryColorPicker').value = theme.primary;
+            document.getElementById('bgColorPicker').value = theme.backgroundLight;
+
             renderProfile();
         });
+
+        window.updateThemeColors = function () {
+            const primary = document.getElementById('primaryColorPicker').value;
+            const bgLight = document.getElementById('bgColorPicker').value;
+            applyTheme(primary, bgLight);
+        }
+
+        window.resetTheme = function () {
+            if (confirm("確定要恢復預設顏色嗎？")) {
+                applyTheme('#2563EB', '#eff6ff');
+                document.getElementById('primaryColorPicker').value = '#2563EB';
+                document.getElementById('bgColorPicker').value = '#eff6ff';
+            }
+        }
 
         function renderProfile() {
             const name = getUserName();

@@ -19,9 +19,9 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#2563EB",
+                        "primary": "var(--primary-color, #2563EB)",
                         "primary-content": "#ffffff",
-                        "background-light": "#eff6ff",
+                        "background-light": "var(--background-light-color, #eff6ff)",
                         "background-dark": "#0f172a",
                         "surface-light": "#ffffff",
                         "surface-dark": "#1e293b",
@@ -218,9 +218,10 @@
         </nav>
     </div>
 
-    <!-- Firebase Manager & Logic -->
+    <!-- Theme & Firebase Logic -->
     <script type="module">
-        import { initApp, listenToTrip, updateTrip, getUserName, getGroupId } from './firebase-manager.js';
+        import './theme-manager.js';
+        import { initApp, listenToTrip, updateTrip, getGroupId, getUserName } from './firebase-manager.js';
 
         let currentTrip = null;
         let currentDayIndex = 0;

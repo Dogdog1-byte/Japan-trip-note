@@ -19,9 +19,9 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#2563EB",
+                        "primary": "var(--primary-color, #2563EB)",
                         "primary-content": "#ffffff",
-                        "background-light": "#eff6ff",
+                        "background-light": "var(--background-light-color, #eff6ff)",
                         "background-dark": "#0f172a",
                         "surface-light": "#ffffff",
                         "surface-dark": "#1e293b",
@@ -149,8 +149,8 @@
 
     </div>
 
-    <!-- Firebase Manager & Logic -->
     <script type="module">
+        import './theme-manager.js';
         import { initApp, createTrip } from './firebase-manager.js';
 
         // Auto Dark Mode
