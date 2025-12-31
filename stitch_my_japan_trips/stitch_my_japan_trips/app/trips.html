@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>我的日本行程</title>
+    <title>我的旅程 (群組同步)</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"
@@ -31,192 +31,97 @@
                         "text-sub-dark": "#a3b5a7",
                     },
                     fontFamily: {
-                        "display": ["Plus Jakarta Sans", "Noto Sans TC", "sans-serif"],
-                        "sans": ["Plus Jakarta Sans", "Noto Sans TC", "sans-serif"]
+                        "display": ["Plus Jakarta Sans", "Noto Sans TC", "sans-serif"]
                     },
                     borderRadius: { "DEFAULT": "1rem", "lg": "1.5rem", "xl": "2rem", "2xl": "2.5rem", "full": "9999px" },
                 },
             },
         }
     </script>
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
-            min-height: max(884px, 100dvh);
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
 </head>
 
 <body
     class="bg-background-light dark:bg-background-dark min-h-screen text-text-main-light dark:text-text-main-dark flex justify-center">
     <div
         class="relative flex h-full min-h-screen w-full max-w-md flex-col overflow-x-hidden bg-background-light dark:bg-background-dark pb-24">
+
+        <!-- Setup Screen (Overlay) -->
+        <div id="setupScreen"
+            class="fixed inset-0 z-50 bg-background-light dark:bg-background-dark p-6 flex flex-col justify-center items-center hidden">
+            <div class="w-full max-w-sm">
+                <div class="text-center mb-10">
+                    <span class="material-symbols-outlined text-6xl text-primary mb-4">connect_without_contact</span>
+                    <h1 class="text-2xl font-extrabold">加入旅程群組</h1>
+                    <p class="text-text-sub-light mt-2">輸入相同的群組 ID，與親友即時同步</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold mb-1 ml-1 text-text-sub-light">您的暱稱</label>
+                        <input type="text" id="inputName" placeholder="例如：爸爸"
+                            class="w-full bg-surface-light dark:bg-surface-dark border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1 ml-1 text-text-sub-light">群組 ID (通關密語)</label>
+                        <input type="text" id="inputGroupId" placeholder="例如：Japan2024"
+                            class="w-full bg-surface-light dark:bg-surface-dark border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary">
+                        <p class="text-xs text-text-sub-light mt-1 ml-1">🔒 任何知道此 ID 的人都能編輯</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1 ml-1 text-text-sub-light">Database URL</label>
+                        <input type="text" id="inputDbUrl" placeholder="https://..."
+                            class="w-full bg-surface-light dark:bg-surface-dark border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <button id="connectBtn"
+                        class="w-full py-4 mt-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+                        開始同步
+                    </button>
+
+                    <div id="errorMsg" class="text-red-500 text-sm text-center hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content (Trip List) -->
         <header
-            class="sticky top-0 z-10 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm px-4 pt-8 pb-2">
-            <div class="flex items-center justify-between mb-4">
-                <h1 class="text-3xl font-extrabold tracking-tight">我的日本行程</h1>
+            class="sticky top-0 z-10 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm px-6 pt-10 pb-4 flex justify-between items-end">
+            <div>
+                <p class="text-xs font-bold text-primary mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">group</span>
+                    <span id="displayGroup">...</span>
+                </p>
+                <h1 class="text-3xl font-extrabold tracking-tight">我的旅程</h1>
             </div>
-            <div class="relative w-full">
-                <label
-                    class="flex items-center h-12 w-full rounded-full bg-surface-light dark:bg-surface-dark shadow-sm px-4 focus-within:ring-2 focus-within:ring-primary transition-shadow">
-                    <span
-                        class="material-symbols-outlined text-text-sub-light dark:text-text-sub-dark mr-3">search</span>
-                    <input
-                        class="w-full bg-transparent border-none p-0 text-base placeholder-text-sub-light dark:placeholder-text-text-sub-dark focus:ring-0 text-text-main-light dark:text-text-main-dark"
-                        placeholder="搜尋行程或年份" type="text" />
-                </label>
-            </div>
+            <button onclick="logout()"
+                class="text-xs font-bold text-text-sub-light bg-gray-200 dark:bg-gray-800 px-3 py-1.5 rounded-full">
+                登出
+            </button>
         </header>
 
-        <div class="flex gap-2 px-4 py-2 overflow-x-auto no-scrollbar mask-linear-fade">
-            <button
-                class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary text-primary-content px-5 shadow-sm shadow-primary/20">
-                <span class="text-sm font-bold">全部</span>
-            </button>
-            <button
-                class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-100 dark:border-gray-800 px-5">
-                <span class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">即將出發</span>
-            </button>
-            <button
-                class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-100 dark:border-gray-800 px-5">
-                <span class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">進行中</span>
-            </button>
-            <button
-                class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-100 dark:border-gray-800 px-5">
-                <span class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">已結束</span>
-            </button>
-        </div>
+        <main class="flex-1 px-4 pt-2">
+            <div id="loading" class="flex flex-col items-center justify-center py-20 text-text-sub-light">
+                <span class="material-symbols-outlined animate-spin text-4xl mb-2">sync</span>
+                <p>正在同步雲端資料...</p>
+            </div>
 
-        <div class="flex flex-col gap-5 p-4" id="trips-container">
-            <!-- Dynamic content will be injected here -->
-        </div>
+            <div id="tripsList" class="flex flex-col gap-4 transition-all duration-300 opacity-0">
+                <!-- Trips injected here -->
+            </div>
 
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const container = document.getElementById('trips-container');
-                const defaultTrips = [
-                    {
-                        id: 1,
-                        name: '黃金週冒險',
-                        dest: '日本',
-                        start: '2024-05-01',
-                        end: '2024-05-07',
-                        status: 'upcoming',
-                        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD2JfCZ5g5fwbXBV6VGEXI4sGhm64rtz0vcHFkPr-WbVrZ5ko6X1GluuokEPQXWOrJbkqbEwfrnh0T-GSN8VT2V6LDh31V6Nm9p0FCg3TAfAchdzHwYI3JdkCh1BpUDVgESzON-8mN9dIsGrpp824fUpUGwsv605aFGtq-M2ewPSXQ8xisKO1nXwI7JyaitpyV_mHy70QsI1PO72xhhle4RfOvN_FgOGKRAq0Mg3hZUqQdSEyMaAu2AuWPPZgFvPpOwvLpF4a2KpjY',
-                        tag: '即將出發'
-                    },
-                    {
-                        id: 2,
-                        name: '大阪美食之旅',
-                        dest: '大阪',
-                        start: '2024-10-10',
-                        end: '2024-10-15',
-                        status: 'planned',
-                        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAFnCiSoxep1PcYgHroix5PcUkqiXmLY39FAwlVPIc-xeQF2OIo07m2a3qy3skuaQT3I0agPWD-uyyAzBeDK3uAJUUvKXC4UL9wNyf079sPXyFqdjyN4go6rKSoDGIkrdOr5bqKFwU4JMGreUEKdwoPdBXyfu9uQ426XeoHIm2kj_N1wgUq_-wVCOc-fMOuKXhq0T6F4eJ_gTmwFecMv8PRJeRAGXIlL8MAC95kU426XeoHIm2kj_N1wgUq_-wVCOc-fMOuKXhq0T6F4eJ_gTmwFecMv8PRJeRAGXIlL8MAC95kU48mj33oQ1QdaguHLGKdmqdQ4Rvi1UQ1dhLeBCc',
-                        tag: '已規劃'
-                    },
-                    {
-                        id: 3,
-                        name: '北海道之冬',
-                        dest: '北海道',
-                        start: '2025-02-02',
-                        end: '2025-02-10',
-                        status: 'draft',
-                        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEHSaIYCTNoW1ncmt9jdAV2lAp_JNn0_Mrurq3bvUcor1aoWPDAwXiLG59oQxciPPHE8oexG5Q4CWwfoL4aMrtrgm6C_PsKk1mYWUuTB6t9TXEs7RNoB902H39vvLo4oiruOo95we_ImWtcmwhJM7eA9YaXqQRC-eBUTZEfspDeJdMZVfdZMbi62OYfk1Sui69V5Uo4x8n68-2ixRvPtUx7daes_SAOFbV8CSN_9WSHKLdf3yuv5QU_pmNJ-oEVzj0YMpHRq5EQkY',
-                        tag: '草稿'
-                    }
-                ];
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 text-center opacity-60">
+                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png"
+                    class="w-32 h-32 mb-4 opacity-50 grayscale">
+                <p class="text-lg font-bold">還沒有行程</p>
+                <p class="text-sm">點擊下方 + 按鈕新增第一個旅程</p>
+            </div>
+        </main>
 
-                let storedTrips = JSON.parse(localStorage.getItem('japan_trips'));
-
-                // Initialize if empty
-                if (!storedTrips || storedTrips.length === 0) {
-                    storedTrips = defaultTrips;
-                    localStorage.setItem('japan_trips', JSON.stringify(defaultTrips));
-                }
-
-                container.innerHTML = storedTrips.map(trip => {
-                    // Logic to format date and tags
-                    const formatDate = (dateStr) => {
-                        const [y, m, d] = dateStr.split('-');
-                        return `${y}年 ${parseInt(m)}月 ${parseInt(d)}日`;
-                    };
-                    const dateDisplay = `${formatDate(trip.start)} - ${formatDate(trip.end)}`;
-                    let tagClass = 'bg-primary/90 text-primary-content';
-                    if (trip.status === 'planned') tagClass = 'bg-surface-light/20 border border-white/30 text-white';
-                    if (trip.status === 'draft') tagClass = 'bg-surface-light/20 border border-white/30 text-white';
-
-                    let tagName = trip.tag || '規劃中';
-                    if (trip.status === 'upcoming') tagName = '即將出發';
-                    if (trip.status === 'planning') tagName = '規劃中';
-
-                    return `
-                    <div class="group relative flex flex-col rounded-2xl bg-surface-light dark:bg-surface-dark shadow-sm overflow-hidden transition-all active:scale-[0.98]">
-                        <a href="detail.html?id=${trip.id}" class="block">
-                            <div class="relative h-48 w-full overflow-hidden">
-                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style="background-image: url('${trip.image}');"></div>
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                                <div class="absolute top-4 left-4">
-                                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold backdrop-blur-md ${tagClass}">
-                                        ${tagName}
-                                    </span>
-                                </div>
-                            </div>
-                        </a>
-                        <!-- Delete Button (Overlay) -->
-                        <button onclick="deleteTrip(${trip.id}, event)" class="absolute top-3 right-3 z-10 p-2 bg-black/40 hover:bg-red-500/80 rounded-full text-white backdrop-blur-md transition-colors">
-                            <span class="material-symbols-outlined text-lg">delete</span>
-                        </button>
-
-                        <a href="detail.html?id=${trip.id}" class="block p-5">
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="text-xl font-bold leading-tight text-text-main-light dark:text-text-main-dark">${trip.name}</h3>
-                            </div>
-                            <div class="flex items-center gap-2 text-text-sub-light dark:text-text-sub-dark text-sm font-medium mb-3">
-                                <span class="material-symbols-outlined text-lg">calendar_month</span>
-                                <span>${dateDisplay}</span>
-                            </div>
-                            <div class="flex items-center justify-between mt-4">
-                                <div class="flex -space-x-2">
-                                     <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 ring-2 ring-surface-light dark:ring-surface-dark text-primary font-bold text-xs">我</div>
-                                </div>
-                                <span class="text-xs font-bold text-primary cursor-pointer hover:underline flex items-center gap-1">
-                                    查看行程 <span class="material-symbols-outlined text-base">arrow_forward</span>
-                                </span>
-                            </div>
-                        </a>
-                    </div>
-                    `;
-                }).join('') + '<div class="h-20"></div>';
-            });
-
-            function deleteTrip(tripId, event) {
-                event.preventDefault(); // Prevent link navigation
-                if (!confirm('確定要刪除整個行程嗎？此動作無法復原。')) return;
-
-                let trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
-                trips = trips.filter(t => t.id != tripId);
-                localStorage.setItem('japan_trips', JSON.stringify(trips));
-
-                // Reload page to reflect changes
-                window.location.reload();
-            }
-        </script>
-
-        <!-- Floating Action Button -->
-        <div class="fixed bottom-24 right-6 z-20">
+        <!-- FAB -->
+        <div class="fixed bottom-24 right-5 z-40">
             <a href="create.html"
-                class="flex items-center justify-center h-14 w-14 rounded-full bg-primary text-primary-content shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all active:scale-95">
-                <span class="material-symbols-outlined text-3xl">add</span>
+                class="flex size-16 items-center justify-center rounded-full bg-text-main-light dark:bg-white text-white dark:text-black shadow-xl transition hover:scale-105 active:scale-95">
+                <span class="material-symbols-outlined" style="font-size: 32px;">add</span>
             </a>
         </div>
 
@@ -234,11 +139,7 @@
                     <span class="material-symbols-outlined">checklist</span>
                     <span class="text-[10px] font-medium">待辦</span>
                 </a>
-                <a href="collaborate.html"
-                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
-                    <span class="material-symbols-outlined">group</span>
-                    <span class="text-[10px] font-medium">協作</span>
-                </a>
+                <!-- Settings/Profile -->
                 <a href="settings.html"
                     class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
                     <span class="material-symbols-outlined">settings</span>
@@ -247,6 +148,104 @@
             </div>
         </nav>
     </div>
+
+    <script type="module">
+        import { initApp, connectFirebase, syncTripsList, deleteTrip, getUserName, getGroupId } from './firebase-manager.js';
+
+        // Auto Dark Mode
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isConfigured = initApp();
+
+            if (!isConfigured) {
+                // Show Setup Screen
+                document.getElementById('setupScreen').classList.remove('hidden');
+
+                // Pre-fill if exists partially
+                document.getElementById('inputDbUrl').value = localStorage.getItem('firebase_db_url') || '';
+            } else {
+                startSync();
+            }
+
+            // Setup Logic
+            document.getElementById('connectBtn').addEventListener('click', () => {
+                const name = document.getElementById('inputName').value.trim();
+                const gid = document.getElementById('inputGroupId').value.trim();
+                const url = document.getElementById('inputDbUrl').value.trim();
+
+                if (!name || !gid || !url) {
+                    alert('請填寫所有欄位');
+                    return;
+                }
+
+                if (connectFirebase(url, name, gid)) {
+                    document.getElementById('setupScreen').classList.add('hidden');
+                    startSync();
+                }
+            });
+        });
+
+        function startSync() {
+            document.getElementById('displayGroup').innerText = getGroupId();
+
+            syncTripsList((trips) => {
+                const list = document.getElementById('tripsList');
+                const loading = document.getElementById('loading');
+                const empty = document.getElementById('emptyState');
+
+                loading.classList.add('hidden');
+                list.innerHTML = '';
+
+                if (!trips || trips.length === 0) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                empty.classList.add('hidden');
+                list.classList.remove('opacity-0');
+
+                trips.forEach(trip => {
+                    const editorInfo = trip.lastEditor ?
+                        `<span class="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-500">✍️ ${trip.lastEditor} 修訂</span>` : '';
+
+                    const card = document.createElement('div');
+                    card.className = "bg-surface-light dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition group relative";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start" onclick="location.href='detail.html?id=${trip.id}'">
+                            <div>
+                                <h3 class="text-xl font-bold mb-1">${trip.name}</h3>
+                                <p class="text-sm text-text-sub-light">${trip.start} - ${trip.end}</p>
+                                <div class="mt-3 flex items-center gap-2">
+                                    ${editorInfo}
+                                </div>
+                            </div>
+                            <span class="material-symbols-outlined text-gray-300">chevron_right</span>
+                        </div>
+                        <button onclick="handleDelete('${trip.id}')" class="absolute bottom-4 right-4 p-2 text-gray-300 hover:text-red-500 transition z-10">
+                             <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                    `;
+                    list.appendChild(card);
+                });
+            });
+        }
+
+        window.handleDelete = function (id) {
+            if (confirm('確定要刪除這個行程嗎？這會同步刪除所有人的資料！')) {
+                deleteTrip(id);
+            }
+        };
+
+        window.logout = function () {
+            if (confirm('確定要登出群組嗎？')) {
+                localStorage.removeItem('group_id');
+                location.reload();
+            }
+        };
+    </script>
 </body>
 
 </html>

@@ -120,7 +120,7 @@
 
         <!-- Footer Action -->
         <div class="p-6">
-            <button onclick="createTrip()"
+            <button onclick="handleCreateTrip()"
                 class="w-full h-14 bg-primary text-primary-content rounded-full font-bold text-lg shadow-lg shadow-primary/30 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
                 建立行程
             </button>
@@ -128,13 +128,31 @@
 
     </div>
 
-    <script>
-        // Set default dates
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('startDate').value = today;
-        document.getElementById('endDate').value = today;
+    <!-- Firebase Manager & Logic -->
+    <script type="module">
+        import { initApp, createTrip } from './firebase-manager.js';
 
-        function selectImage(btn, url) {
+        // Auto Dark Mode
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Init Connection Check
+            const isConfigured = initApp();
+            if (!isConfigured) {
+                alert("請先在首頁設定同步群組");
+                location.href = 'trips.html';
+                return;
+            }
+
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+        });
+
+        window.selectImage = function (btn, url) {
             document.querySelectorAll('.image-option').forEach(b => b.classList.remove('border-primary'));
             btn.classList.add('border-primary');
             document.getElementById('selectedImage').value = url;
@@ -142,7 +160,7 @@
         // Select first by default
         document.querySelector('.image-option').classList.add('border-primary');
 
-        function createTrip() {
+        window.handleCreateTrip = function () {
             const name = document.getElementById('tripName').value.trim();
             const dest = document.getElementById('tripDest').value.trim();
             const start = document.getElementById('startDate').value;
@@ -152,25 +170,24 @@
             if (!name) return alert('請輸入行程名稱');
             if (new Date(end) < new Date(start)) return alert('結束日期不能早於出發日期');
 
-            const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
-
             const newTrip = {
                 id: Date.now(),
                 name, dest, start, end,
                 image,
                 status: 'planning',
                 tag: '規劃中',
-                itinerary: {} // Empty itinerary
+                itinerary: {}
             };
 
-            // Pre-populate itinerary days keys based on date range
-            // (Optional, can also be done dynamically in detail view)
-
-            trips.unshift(newTrip);
-            localStorage.setItem('japan_trips', JSON.stringify(trips));
-
-            // Redirect
-            window.location.href = `detail.html?id=${newTrip.id}`;
+            createTrip(newTrip)
+                .then(() => {
+                    // Redirect to detail
+                    window.location.href = `detail.html?id=${newTrip.id}`;
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("建立失敗：" + err.message);
+                });
         }
     </script>
 </body>

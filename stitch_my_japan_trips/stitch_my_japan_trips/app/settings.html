@@ -54,16 +54,33 @@
             <!-- Profile Section -->
             <div class="flex items-center gap-4 p-4 bg-surface-light dark:bg-surface-dark rounded-2xl">
                 <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span class="text-2xl font-bold text-primary" id="userInitial">我</span>
+                    <span class="text-2xl font-bold text-primary" id="userInitial">?</span>
                 </div>
                 <div class="flex-1">
-                    <h3 class="font-bold text-lg" id="displayName">旅行者</h3>
-                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark">點擊修改名稱</p>
+                    <h3 class="font-bold text-lg" id="displayName">載入中...</h3>
+                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark">點擊右側修改名稱</p>
                 </div>
                 <button onclick="editUserName()"
                     class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition">
                     <span class="material-symbols-outlined">edit</span>
                 </button>
+            </div>
+
+            <!-- Group Info -->
+            <div class="bg-primary/5 dark:bg-primary/10 rounded-2xl p-6 border border-primary/20">
+                <h3 class="font-bold text-lg mb-2 text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined">group</span>
+                    同步群組
+                </h3>
+                <p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-3">分享此 ID 給朋友，即可同步所有行程。</p>
+
+                <div class="flex items-center gap-2 bg-white dark:bg-black/20 p-3 rounded-xl border border-primary/10">
+                    <code id="groupIdDisplay"
+                        class="flex-1 font-mono font-bold text-lg text-center select-all">Checking...</code>
+                    <button onclick="copyGroupId()" class="p-2 text-primary hover:bg-primary/10 rounded-lg transition">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                </div>
             </div>
 
             <!-- General Settings -->
@@ -83,60 +100,19 @@
                         </div>
                     </label>
                 </button>
-
-                <button
-                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                    <div class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary">notifications</span>
-                        <span class="font-medium">通知</span>
-                    </div>
-                    <span class="material-symbols-outlined text-text-sub-light">chevron_right</span>
-                </button>
             </div>
 
-            <!-- Data & Storage -->
+            <!-- Account Actions -->
             <div class="space-y-2">
-                <h2 class="text-sm font-bold text-text-sub-light dark:text-text-sub-dark px-2">資料與儲存</h2>
+                <h2 class="text-sm font-bold text-text-sub-light dark:text-text-sub-dark px-2">帳號動作</h2>
 
-                <button onclick="exportData()"
-                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                <button onclick="logoutGroup()"
+                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition text-red-500">
                     <div class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary">download</span>
-                        <span class="font-medium">匯出資料</span>
+                        <span class="material-symbols-outlined">logout</span>
+                        <span class="font-medium">登出群組</span>
                     </div>
-                    <span class="material-symbols-outlined text-text-sub-light">chevron_right</span>
-                </button>
-
-                <button onclick="clearData()"
-                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                    <div class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-red-500">delete</span>
-                        <span class="font-medium text-red-500">清除所有資料</span>
-                    </div>
-                    <span class="material-symbols-outlined text-text-sub-light">chevron_right</span>
-                </button>
-            </div>
-
-            <!-- About -->
-            <div class="space-y-2">
-                <h2 class="text-sm font-bold text-text-sub-light dark:text-text-sub-dark px-2">關於</h2>
-
-                <button
-                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                    <div class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary">info</span>
-                        <span class="font-medium">版本資訊</span>
-                    </div>
-                    <span class="text-sm text-text-sub-light">v1.0.0</span>
-                </button>
-
-                <button
-                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                    <div class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary">privacy_tip</span>
-                        <span class="font-medium">隱私權政策</span>
-                    </div>
-                    <span class="material-symbols-outlined text-text-sub-light">chevron_right</span>
+                    <span class="material-symbols-outlined text-red-500 opacity-50">chevron_right</span>
                 </button>
             </div>
         </div>
@@ -155,11 +131,6 @@
                     <span class="material-symbols-outlined">checklist</span>
                     <span class="text-[10px] font-medium">待辦</span>
                 </a>
-                <a href="collaborate.html"
-                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
-                    <span class="material-symbols-outlined">group</span>
-                    <span class="text-[10px] font-medium">協作</span>
-                </a>
                 <a href="settings.html"
                     class="flex flex-col items-center justify-center w-full h-full space-y-1 text-primary">
                     <span class="material-symbols-outlined font-variation-settings-fill">settings</span>
@@ -169,76 +140,66 @@
         </nav>
     </div>
 
-    <script>
-        // Load user profile
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initApp, getUserName, getGroupId } from './firebase-manager.js';
+
         document.addEventListener('DOMContentLoaded', () => {
-            loadUserProfile();
-            initializeDarkMode();
+            initApp();
+
+            // Auto Dark Mode setup
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('darkModeToggle').checked = true;
+            }
+
+            renderProfile();
         });
 
-        function loadUserProfile() {
-            const userName = localStorage.getItem('user_name') || '旅行者';
-            document.getElementById('displayName').textContent = userName;
-            document.getElementById('userInitial').textContent = userName.charAt(0);
+        function renderProfile() {
+            const name = getUserName();
+            const gid = getGroupId();
+
+            document.getElementById('displayName').innerText = name;
+            document.getElementById('userInitial').innerText = name.charAt(0);
+            document.getElementById('groupIdDisplay').innerText = gid || '未登入';
         }
 
-        function editUserName() {
-            const currentName = localStorage.getItem('user_name') || '旅行者';
-            const newName = prompt('請輸入您的名稱：', currentName);
-
+        window.editUserName = function () {
+            const current = getUserName();
+            const newName = prompt("輸入新的暱稱：", current);
             if (newName && newName.trim()) {
                 localStorage.setItem('user_name', newName.trim());
-                loadUserProfile();
-                alert('✅ 名稱已更新！');
+                location.reload();
             }
         }
 
-        // Dark mode initialization
-        function initializeDarkMode() {
-            const darkMode = localStorage.getItem('darkMode');
-            const toggle = document.getElementById('darkModeToggle');
-
-            if (darkMode === 'true') {
-                document.documentElement.classList.add('dark');
-                toggle.checked = true;
+        window.copyGroupId = function () {
+            const gid = getGroupId();
+            if (gid) {
+                navigator.clipboard.writeText(gid);
+                alert("已複製群組 ID！");
             }
         }
 
-        // Dark mode toggle
-        function toggleDarkMode() {
+        window.logoutGroup = function () {
+            if (confirm("確定要登出吗？您將需要重新輸入 Group ID 才能看到行程。")) {
+                localStorage.removeItem('group_id');
+                location.href = 'trips.html';
+            }
+        }
+
+        window.toggleDarkMode = function () {
             const html = document.documentElement;
-            const toggle = document.getElementById('darkModeToggle');
-
             if (html.classList.contains('dark')) {
                 html.classList.remove('dark');
-                toggle.checked = false;
                 localStorage.setItem('darkMode', 'false');
+                document.getElementById('darkModeToggle').checked = false;
             } else {
                 html.classList.add('dark');
-                toggle.checked = true;
                 localStorage.setItem('darkMode', 'true');
-            }
-        }
-
-        // Export data
-        function exportData() {
-            const trips = localStorage.getItem('japan_trips') || '[]';
-            const blob = new Blob([trips], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `japan-trips-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            alert('資料已匯出！');
-        }
-
-        // Clear data
-        function clearData() {
-            if (confirm('確定要清除所有資料嗎？此操作無法復原。')) {
-                localStorage.removeItem('japan_trips');
-                alert('所有資料已清除');
-                window.location.href = 'trips.html';
+                document.getElementById('darkModeToggle').checked = true;
             }
         }
     </script>

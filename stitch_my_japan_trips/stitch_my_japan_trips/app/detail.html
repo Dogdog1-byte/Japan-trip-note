@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport" />
-    <title>行程詳情</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>行程詳情 (即時同步)</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"
@@ -21,468 +21,278 @@
                     colors: {
                         "primary": "#13ec5b",
                         "primary-content": "#0a2815",
-                        "background-light": "#f8fcf9",
+                        "background-light": "#f6f8f6",
                         "background-dark": "#102216",
-                        "card-light": "#ffffff",
-                        "card-dark": "#162b1f",
-                        "text-main-light": "#0d1b12",
-                        "text-main-dark": "#e0ece4",
-                        "text-sub-light": "#4c9a66",
-                        "text-sub-dark": "#8fbfa0",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2f23",
+                        "text-main-light": "#102216",
+                        "text-main-dark": "#f6f8f6",
+                        "text-sub-light": "#5c6f60",
+                        "text-sub-dark": "#a3b5a7",
                     },
                     fontFamily: {
                         "display": ["Plus Jakarta Sans", "Noto Sans TC", "sans-serif"]
                     },
-                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
-                    boxShadow: {
-                        "soft": "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
-                    }
+                    borderRadius: { "DEFAULT": "1rem", "lg": "1.5rem", "xl": "2rem", "2xl": "2.5rem", "full": "9999px" },
                 },
             },
         }
     </script>
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
-        }
-
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
 </head>
 
 <body
-    class="bg-background-light dark:bg-background-dark font-display antialiased text-text-main-light dark:text-text-main-dark transition-colors duration-200">
-    <div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden pb-24">
+    class="bg-background-light dark:bg-background-dark min-h-screen text-text-main-light dark:text-text-main-dark flex justify-center">
+    <div
+        class="relative flex h-full min-h-screen w-full max-w-md flex-col overflow-x-hidden bg-background-light dark:bg-background-dark pb-24">
 
         <!-- Header -->
-        <header class="sticky top-0 z-40 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md pt-safe">
-            <div class="flex items-center justify-between px-4 py-3">
-                <a href="trips.html"
-                    class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-                    <span class="material-symbols-outlined">arrow_back_ios_new</span>
-                </a>
-                <h1 class="text-lg font-bold truncate max-w-[200px]" id="header-title">行程詳情</h1>
-                <button onclick="shareTrip()"
-                    class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-                    <span class="material-symbols-outlined">ios_share</span>
-                </button>
+        <header
+            class="sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm px-4 pt-8 pb-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <button onclick="location.href='trips.html'"
+                class="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div class="flex-1 text-center mx-2">
+                <h1 id="header-title" class="text-lg font-bold truncate">載入中...</h1>
+                <p id="trip-date-display"
+                    class="text-xs text-text-sub-light dark:text-text-sub-dark flex items-center justify-center gap-1">
+                    ...
+                </p>
             </div>
-
-            <!-- Date Tabs -->
-            <div class="px-4 pb-2">
-                <div class="flex gap-3 overflow-x-auto hide-scrollbar mask-linear-fade pr-4" id="days-container">
-                    <!-- Injected via JS -->
-                </div>
-            </div>
+            <button onclick="shareTrip()"
+                class="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition text-primary">
+                <span class="material-symbols-outlined">share</span>
+            </button>
         </header>
 
-        <main class="flex flex-col gap-6 px-4 pt-4">
-            <!-- Summary Card -->
-            <div class="relative overflow-hidden rounded-2xl bg-card-light dark:bg-card-dark p-4 shadow-soft">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h2 class="text-2xl font-extrabold leading-tight text-text-main-light dark:text-text-main-dark"
-                            id="trip-day-display">
-                            Day 1
-                        </h2>
-                        <p class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark mt-1"
-                            id="trip-date-display">
-                            2024/05/01
-                        </p>
-                    </div>
-                    <div class="flex flex-col items-end">
-                        <span class="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded-lg"
-                            id="items-count">0 行程</span>
-                    </div>
-                </div>
+        <!-- Date Tabs -->
+        <div
+            class="sticky top-[80px] z-10 bg-background-light dark:bg-background-dark py-2 px-2 overflow-x-auto no-scrollbar border-b border-gray-100 dark:border-gray-800">
+            <div id="days-container" class="flex gap-2 min-w-max px-2">
+                <!-- Days Injected Here -->
+            </div>
+        </div>
+
+        <main class="flex-1 px-4 pt-6 pb-20">
+            <div class="flex items-center justify-between mb-6">
+                <h2 id="trip-day-display" class="text-2xl font-extrabold">Day 1</h2>
+                <span id="items-count"
+                    class="text-xs font-bold bg-white dark:bg-surface-dark px-3 py-1 rounded-full shadow-sm">0
+                    個行程</span>
             </div>
 
             <!-- Timeline -->
-            <section class="relative pl-4 pb-20" id="itinerary-timeline">
-                <div class="absolute bottom-0 left-[23px] top-2 w-0.5 bg-gray-200 dark:bg-gray-800"></div>
-                <!-- Injected via JS -->
-            </section>
+            <div id="itinerary-timeline" class="relative pl-2">
+                <!-- Items Injected Here -->
+            </div>
         </main>
 
         <!-- FAB -->
         <div class="fixed bottom-24 right-5 z-40">
             <button onclick="openModal()"
-                class="flex size-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-[0_4px_20px_rgba(19,236,91,0.4)] transition hover:scale-105 active:scale-95">
+                class="flex size-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg shadow-primary/30 transition hover:scale-105 active:scale-95">
                 <span class="material-symbols-outlined" style="font-size: 28px;">add</span>
             </button>
         </div>
 
-        <!-- Add/Edit Modal -->
+        <!-- Create/Edit Modal -->
         <div id="modal-overlay"
-            class="fixed inset-0 z-50 bg-black/60 hidden backdrop-blur-sm opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
-            <div id="modal-content"
-                class="bg-surface-light dark:bg-surface-dark w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl transform translate-y-full sm:translate-y-10 transition-transform duration-300">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold" id="modal-title">新增行程</h3>
-                    <button onclick="closeModal()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </div>
+            class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"
+            onclick="closeModal()"></div>
+        <div id="modal-content"
+            class="fixed bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto max-w-md mx-auto">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
 
-                <form id="itemForm" onsubmit="handleFormSubmit(event)" class="flex flex-col gap-4">
-                    <input type="hidden" id="itemId">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modal-title" class="text-xl font-bold">新增行程</h3>
+                <button type="button" id="deleteBtn" onclick="deleteCurrentItem()"
+                    class="text-red-500 font-bold text-sm hidden flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">delete</span> 刪除
+                </button>
+            </div>
 
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="col-span-1">
-                            <label class="block text-xs font-bold mb-1 text-text-sub-light">時間</label>
-                            <input type="time" id="itemTime" required
-                                class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold mb-1 text-text-sub-light">標題</label>
-                            <input type="text" id="itemName" required placeholder="例如: 參觀雷門"
-                                class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl focus:ring-1 focus:ring-primary">
-                        </div>
-                    </div>
+            <form id="itemForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                <input type="hidden" id="itemId">
 
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold mb-1 text-text-sub-light">地點 / 備註</label>
-                        <textarea id="itemDesc" rows="3" placeholder="輸入地點地址、備註、交通方式..."
-                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl focus:ring-1 focus:ring-primary"></textarea>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">時間</label>
+                        <input type="time" id="itemTime" required
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-lg font-bold focus:ring-1 focus:ring-primary text-center">
                     </div>
-
                     <div>
-                        <label class="block text-xs font-bold mb-1 text-text-sub-light">類型</label>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">類型</label>
                         <select id="itemTag"
-                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl focus:ring-1 focus:ring-primary">
-                            <option value="景點">景點</option>
-                            <option value="美食">美食</option>
-                            <option value="交通">交通</option>
-                            <option value="住宿">住宿</option>
-                            <option value="購物">購物</option>
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 font-medium focus:ring-1 focus:ring-primary">
+                            <option value="景點">🗻 景點</option>
+                            <option value="美食">🍜 美食</option>
+                            <option value="交通">🚄 交通</option>
+                            <option value="住宿">🏨 住宿</option>
+                            <option value="購物">🛍️ 購物</option>
                         </select>
                     </div>
+                </div>
 
-                    <div>
-                        <label class="block text-xs font-bold mb-1 text-text-sub-light">圖片</label>
-                        <div class="flex gap-2">
-                            <input type="file" id="imageUpload" accept="image/*" class="hidden"
-                                onchange="handleImageUpload(event)">
-                            <button type="button" onclick="document.getElementById('imageUpload').click()"
-                                class="flex-1 py-2 px-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition">
-                                📷 上傳圖片
-                            </button>
-                            <input type="text" id="itemImage" placeholder="或貼上網址"
-                                class="flex-[2] bg-gray-50 dark:bg-black/20 border-none rounded-xl focus:ring-1 focus:ring-primary text-sm">
-                        </div>
-                        <div id="imagePreview" class="mt-2 hidden">
-                            <img id="previewImg" class="w-full h-32 object-cover rounded-xl">
-                        </div>
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">名稱</label>
+                    <input type="text" id="itemName" required placeholder="例如：清水寺"
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
+                </div>
 
-                    <div class="flex gap-3 mt-4">
-                        <button type="button" onclick="deleteCurrentItem()" id="deleteBtn"
-                            class="flex-1 py-3 rounded-xl bg-red-50 text-red-500 font-bold hidden">刪除</button>
-                        <button type="submit"
-                            class="flex-[2] py-3 rounded-xl bg-primary text-primary-content font-bold shadow-lg shadow-primary/20">儲存</button>
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">備註 (選填)</label>
+                    <textarea id="itemDesc" rows="2" placeholder="門票價格、訂位資訊..."
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">照片 (選填)</label>
+                    <div class="flex items-center gap-4">
+                        <label
+                            class="flex-1 cursor-pointer bg-gray-50 dark:bg-black/20 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-white/5 transition">
+                            <span class="material-symbols-outlined text-primary">add_photo_alternate</span>
+                            <span class="text-xs font-bold text-text-sub-light">上傳照片</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                        </label>
+                        <input type="hidden" id="itemImage">
                     </div>
-                </form>
-            </div>
+                    <div id="imagePreview" class="hidden mt-3 relative w-full h-32 rounded-xl overflow-hidden group">
+                        <img id="previewImg" class="w-full h-full object-cover">
+                        <button type="button"
+                            onclick="document.getElementById('itemImage').value=''; document.getElementById('imagePreview').classList.add('hidden')"
+                            class="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-red-500 transition">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform">
+                        儲存行程
+                    </button>
+                </div>
+            </form>
         </div>
 
-        <!-- Navigation (Simplified) -->
+        <!-- Bottom Navigation -->
         <nav
-            class="fixed bottom-0 z-30 w-full border-t border-gray-100 dark:border-gray-800 bg-background-light dark:bg-background-dark pb-safe">
-            <div class="flex h-16 items-center justify-around px-2">
+            class="fixed bottom-0 z-30 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 pb-safe pt-2">
+            <div class="flex justify-around items-center h-16 px-2">
                 <a href="trips.html"
-                    class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary transition">
-                    <span class="material-symbols-outlined">grid_view</span>
-                    <span class="text-[10px] font-medium">列表</span>
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="text-[10px] font-medium">首頁</span>
                 </a>
-                <button class="flex flex-col items-center gap-1 text-primary">
-                    <span class="material-symbols-outlined fill-current">calendar_month</span>
-                    <span class="text-[10px] font-bold">行程</span>
-                </button>
+                <a href="checklist.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">checklist</span>
+                    <span class="text-[10px] font-medium">待辦</span>
+                </a>
+                <a href="settings.html"
+                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="text-[10px] font-medium">設定</span>
+                </a>
             </div>
         </nav>
     </div>
 
-
-    <!-- Firebase SDK -->
+    <!-- Firebase Manager & Logic -->
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { initApp, listenToTrip, updateTrip, getUserName, getGroupId } from './firebase-manager.js';
 
-        window.firebaseApp = null;
-        window.firebaseDb = null;
-        let isSharedMode = false;
-        let shareId = null;
+        let currentTrip = null;
+        let currentDayIndex = 0;
+        let tripDays = [];
+        let tripId = null;
+
+        // Auto Dark Mode
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             tripId = urlParams.get('id');
-            // Check if we are in shared mode via URL or local storage context
-            // Ideally passing shareId in URL if opening from link, or deduce from trip data
-            
-            // However, our share link logic was collaborate.html?share=XYZ
-            // Users might navigate here from collaborate.html which saved the trip to localStorage
-            // We need to know if this specific trip is a "shared" trip to enable sync.
-            
-            // For now, we'll try to init Firebase if config exists, and check if this trip exists in shared_trips
-            // A more robust way: collaborate.html saves 'shareId' into the trip object in localStorage
-            
-            initFirebase();
-            
-            if (!tripId) return alert('No Trip ID');
-            loadTripData();
-        });
 
-        function initFirebase() {
-            const dbUrl = localStorage.getItem('firebase_db_url');
-            if (!dbUrl) return; // No config, offline mode
-
-            try {
-                // Parse Project ID
-                let projectId = 'japan-trip';
-                try {
-                    const url = new URL(dbUrl);
-                    const hostParts = url.hostname.split('.');
-                    if (hostParts[0]) projectId = hostParts[0].replace('-default-rtdb', '');
-                } catch(e) {}
-
-                const firebaseConfig = {
-                    apiKey: "dummy-api-key",
-                    databaseURL: dbUrl,
-                    projectId: projectId
-                };
-
-                window.firebaseApp = initializeApp(firebaseConfig);
-                window.firebaseDb = getDatabase(window.firebaseApp);
-            } catch (error) {
-                console.error('Firebase init error in detail:', error);
-            }
-        }
-
-        // Expose function to sync data
-        window.syncTripToFirebase = function(trip) {
-            if (!window.firebaseDb || !trip.shareId) return;
-
-            console.log('Syncing to Firebase...', trip.shareId);
-            const tripRef = ref(window.firebaseDb, `shared_trips/${trip.shareId}`);
-            set(tripRef, trip).catch(err => console.error('Sync failed', err));
-        };
-
-        // Listen for updates
-        window.listenForUpdates = function(trip) {
-            if (!window.firebaseDb || !trip.shareId) return;
-            
-            // Avoid double listening
-            if (window.currentListeningId === trip.shareId) return;
-            window.currentListeningId = trip.shareId;
-
-            console.log('Listening for updates...', trip.shareId);
-            const tripRef = ref(window.firebaseDb, `shared_trips/${trip.shareId}`);
-            onValue(tripRef, (snapshot) => {
-                const remoteTrip = snapshot.val();
-                if (!remoteTrip) return;
-
-                // Simple merge strategy: Remote wins if different
-                // To avoid loops, compare stringified
-                const localStr = JSON.stringify(currentTrip);
-                const remoteStr = JSON.stringify(remoteTrip);
-
-                if (localStr !== remoteStr) {
-                    console.log('Remote update received, refreshing UI');
-                    currentTrip = remoteTrip;
-                    // Update LocalStorage
-                    const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
-                    const index = trips.findIndex(t => t.id == tripId);
-                    if (index !== -1) {
-                        trips[index] = currentTrip;
-                        localStorage.setItem('japan_trips', JSON.stringify(trips));
-                    }
-                    
-                    // Refresh UI
-                    renderTabs();
-                    renderTimeline();
-                }
-            });
-        };
-    </script>
-    <script>
-        let currentTrip = null;
-        let currentDayIndex = 0; // 0-based index relative to start date
-        let tripDays = [];
-        let tripId = null;
-
-        // document.addEventListener('DOMContentLoaded', ... ) is handled in module script above for init flow
-        // But we need the legacy loadTripData trigger.
-        // Let's modify the flow: The module script calls initFirebase, then loadTripData calling is handled here but slightly delayed/integrated?
-        // Actually, we can keep separate listeners, but we need to ensure firebase is ready.
-        // Let's just rely on the existing DOMContentLoaded in the main script for UI loading, 
-        // and add the listeners in the module script.
-        
-        // Wait... module script runs deferred by default. 
-        // Let's combine logic or let them run in parallel.
-        
-        // To make `syncTripToFirebase` available globally from the module:
-        // window.syncTripToFirebase is set.
-        
-    </script>
-
-    <script>
-       // Main Logic
-        // ... (We will keep the existing script but need to ensure it uses window.syncTripToFirebase)
-
-
-        function loadTripData() {
-            const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
-            currentTrip = trips.find(t => t.id == tripId);
-
-            if (!currentTrip) {
-                alert('行程不存在');
-                window.location.href = 'trips.html';
+            if (!tripId) {
+                alert('No Trip ID');
+                location.href = 'trips.html';
                 return;
             }
 
-            // Check if shared
-            if (currentTrip.shareId && window.listenForUpdates) {
-                window.listenForUpdates(currentTrip);
+            // Init Connection
+            const isConfigured = initApp();
+            if (!isConfigured) {
+                alert("尚未登入群組，將跳轉回首頁");
+                location.href = 'trips.html';
+                return;
             }
 
-            document.getElementById('header-title').innerText = currentTrip.name;
-
-            // Calculate Days
-            const start = new Date(currentTrip.start);
-            const end = new Date(currentTrip.end);
-            tripDays = [];
-
-            // Loop dates
-            for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
-                tripDays.push(new Date(dt));
-            }
-
-            // Ensure we have a valid index
-            if (currentDayIndex >= tripDays.length) currentDayIndex = 0;
-
-            renderTabs();
-            renderTimeline();
-        }
-
-        // ... existing functions ...
-
-        function saveAndRender() {
-            const trips = JSON.parse(localStorage.getItem('japan_trips') || '[]');
-            const index = trips.findIndex(t => t.id == tripId);
-            if (index !== -1) {
-                trips[index] = currentTrip;
-                localStorage.setItem('japan_trips', JSON.stringify(trips));
-                
-                // Sync to Firebase
-                if (window.syncTripToFirebase && currentTrip.shareId) {
-                    window.syncTripToFirebase(currentTrip);
+            // Start Listening
+            listenToTrip(tripId, (tripData) => {
+                if (!tripData) {
+                    // Check if actually deleted or just slow
+                    // For now, if null, assume deleted maybe?
+                    // But init load might be null if ID wrong
+                    if (currentTrip && !tripData) {
+                        alert("行程已被刪除");
+                        location.href = 'trips.html';
+                    }
+                    return;
                 }
-            }
-            renderTimeline();
-            closeModal();
-        }
 
-        function renderTabs() {
-            const container = document.getElementById('days-container');
-            container.innerHTML = tripDays.map((date, index) => {
-                const isActive = index === currentDayIndex;
-                const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-                const dayNum = date.getDate();
-                const dayName = `Day ${index + 1}`;
+                // Update UI
+                if (JSON.stringify(currentTrip) !== JSON.stringify(tripData)) {
+                    currentTrip = tripData;
+                    renderAll();
+                }
+            });
+        });
 
-                return `
-                    <button onclick="switchDay(${index})" 
-                        class="flex flex-col items-center min-w-[64px] p-2 rounded-2xl transition-all ${isActive ? 'bg-primary text-primary-content shadow-lg shadow-primary/20 scale-105' : 'bg-white dark:bg-surface-dark border border-transparent'}">
-                        <span class="text-xs font-bold opacity-80">${dayName}</span>
-                        <span class="text-lg font-black">${dayNum}</span>
-                    </button>
-                `;
-            }).join('');
-
-            // Update day display text
-            const currentDate = tripDays[currentDayIndex];
-            document.getElementById('trip-day-display').innerText = `Day ${currentDayIndex + 1}`;
-            document.getElementById('trip-date-display').innerText = currentDate.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-        }
-
-        function switchDay(index) {
+        // Make functions global for HTML handlers
+        window.switchDay = function (index) {
             currentDayIndex = index;
             renderTabs();
             renderTimeline();
         }
 
-        function renderTimeline() {
-            const container = document.getElementById('itinerary-timeline');
-            const dayKey = `day${currentDayIndex + 1}`; // e.g. day1, day2
-            const items = (currentTrip.itinerary && currentTrip.itinerary[dayKey]) ? currentTrip.itinerary[dayKey] : [];
+        window.openModal = function (isEdit = false) {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContent = document.getElementById('modal-content');
+            modalOverlay.classList.remove('hidden');
+            void modalOverlay.offsetWidth; // trigger reflow
+            modalOverlay.classList.remove('opacity-0');
+            modalContent.classList.remove('translate-y-full');
 
-            // Sort by time
-            items.sort((a, b) => a.time.localeCompare(b.time));
-
-            // Update items count
-            document.getElementById('items-count').innerText = `${items.length} 個行程`;
-
-            if (items.length === 0) {
-                container.innerHTML = `<div class="absolute bottom-0 left-[23px] top-2 w-0.5 bg-gray-200 dark:bg-gray-800"></div>
-                <div class="pl-12 py-10 text-slate-400 text-sm italic">點擊右下角 + 按鈕新增行程</div>`;
-                return;
+            if (!isEdit) {
+                document.getElementById('itemForm').reset();
+                document.getElementById('itemId').value = '';
+                document.getElementById('modal-title').innerText = '新增行程';
+                document.getElementById('deleteBtn').classList.add('hidden');
+                document.getElementById('itemTime').value = '09:00';
+                document.getElementById('imagePreview').classList.add('hidden');
+            } else {
+                const imgUrl = document.getElementById('itemImage').value;
+                if (imgUrl) {
+                    document.getElementById('previewImg').src = imgUrl;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                }
             }
-
-            let html = '<div class="absolute bottom-0 left-[23px] top-2 w-0.5 bg-gray-200 dark:bg-gray-800"></div>';
-
-            items.forEach((item, index) => {
-                const tag = item.tag || '一般';
-                const image = item.image || getDefaultImage(tag);
-
-                html += `
-                <div class="relative mb-6 pl-8 group" 
-                     draggable="true" 
-                     ondragstart="handleDragStart(event, ${index})" 
-                     ondragover="handleDragOver(event)" 
-                     ondrop="handleDrop(event, ${index})" 
-                     ondragend="handleDragEnd(event)">
-                    <!-- Timeline Dot -->
-                    <div class="absolute left-[15px] top-6 z-10 box-border size-4 -translate-x-1/2 rounded-full border-[3px] border-background-light bg-primary dark:border-background-dark group-hover:scale-125 transition-transform"></div>
-                    
-                    <div class="mb-1 flex items-center gap-2">
-                        <span class="cursor-grab active:cursor-grabbing material-symbols-outlined text-gray-400 hover:text-primary transition text-lg" title="拖曳排序">drag_indicator</span>
-                        <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">${item.time}</span>
-                    </div>
-
-                    <div class="flex gap-4 overflow-hidden rounded-2xl bg-card-light dark:bg-card-dark shadow-soft p-3 pr-4 transition-transform border border-transparent hover:border-primary/30 cursor-pointer" onclick="editItem(${item.id})">
-                        <div class="relative aspect-square w-20 shrink-0 rounded-xl overflow-hidden bg-gray-200">
-                             <img src="${image}" class="h-full w-full object-cover" />
-                        </div>
-                        <div class="flex flex-col justify-center min-w-0 flex-1">
-                            <h3 class="text-base font-bold text-text-main-light dark:text-text-main-dark truncate">${item.name}</h3>
-                            <p class="text-xs text-text-sub-light dark:text-text-sub-dark line-clamp-2 mt-1">${item.desc || '無備註'}</p>
-                            <div class="flex gap-2 mt-2">
-                                <span class="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">${tag}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center text-gray-300">
-                           <span class="material-symbols-outlined">chevron_right</span>
-                        </div>
-                    </div>
-                </div>
-                `;
-            });
-
-            container.innerHTML = html;
         }
 
-        // --- Image Upload ---
-        function handleImageUpload(event) {
+        window.closeModal = function () {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContent = document.getElementById('modal-content');
+            modalOverlay.classList.add('opacity-0');
+            modalContent.classList.add('translate-y-full');
+            setTimeout(() => modalOverlay.classList.add('hidden'), 300);
+        }
+
+        window.handleImageUpload = function (event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = (e) => {
                 const base64 = e.target.result;
@@ -493,101 +303,8 @@
             reader.readAsDataURL(file);
         }
 
-        // --- Drag and Drop ---
-        let draggedIndex = null;
-
-        function handleDragStart(event, index) {
-            draggedIndex = index;
-            event.currentTarget.style.opacity = '0.5';
-        }
-
-        function handleDragOver(event) {
-            event.preventDefault();
-        }
-
-        function handleDrop(event, dropIndex) {
-            event.preventDefault();
-            if (draggedIndex === null || draggedIndex === dropIndex) return;
-
-            const dayKey = `day${currentDayIndex + 1}`;
-            const items = currentTrip.itinerary[dayKey];
-
-            // Reorder array
-            const [movedItem] = items.splice(draggedIndex, 1);
-            items.splice(dropIndex, 0, movedItem);
-
-            saveAndRender();
-        }
-
-        function handleDragEnd(event) {
-            event.currentTarget.style.opacity = '1';
-            draggedIndex = null;
-        }
-
-        // --- CRUD Operations ---
-
-        function openModal(isEdit = false) {
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modalContent = document.getElementById('modal-content');
-
-            modalOverlay.classList.remove('hidden');
-            // Trigger reflow
-            void modalOverlay.offsetWidth;
-
-            modalOverlay.classList.remove('opacity-0');
-            modalContent.classList.remove('translate-y-full');
-
-            if (!isEdit) {
-                // Reset form for create
-                document.getElementById('itemForm').reset();
-                document.getElementById('itemId').value = '';
-                document.getElementById('modal-title').innerText = '新增行程';
-                document.getElementById('deleteBtn').classList.add('hidden');
-                document.getElementById('itemTime').value = '09:00'; // Default
-                document.getElementById('imagePreview').classList.add('hidden');
-            } else {
-                // Show preview if editing with existing image
-                const imgUrl = document.getElementById('itemImage').value;
-                if (imgUrl) {
-                    document.getElementById('previewImg').src = imgUrl;
-                    document.getElementById('imagePreview').classList.remove('hidden');
-                }
-            }
-        }
-
-        function closeModal() {
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modalContent = document.getElementById('modal-content');
-
-            modalOverlay.classList.add('opacity-0');
-            modalContent.classList.add('translate-y-full');
-
-            setTimeout(() => {
-                modalOverlay.classList.add('hidden');
-            }, 300);
-        }
-
-        function editItem(id) {
-            const dayKey = `day${currentDayIndex + 1}`;
-            const item = currentTrip.itinerary[dayKey].find(i => i.id == id);
-            if (!item) return;
-
-            document.getElementById('itemId').value = item.id;
-            document.getElementById('itemTime').value = item.time;
-            document.getElementById('itemName').value = item.name;
-            document.getElementById('itemDesc').value = item.desc || '';
-            document.getElementById('itemTag').value = item.tag || '景點';
-            document.getElementById('itemImage').value = item.image || '';
-
-            document.getElementById('modal-title').innerText = '編輯行程';
-            document.getElementById('deleteBtn').classList.remove('hidden');
-
-            openModal(true);
-        }
-
-        function handleFormSubmit(e) {
+        window.handleFormSubmit = function (e) {
             e.preventDefault();
-
             const id = document.getElementById('itemId').value;
             const dayKey = `day${currentDayIndex + 1}`;
 
@@ -604,59 +321,145 @@
             };
 
             if (id) {
-                // Update
                 const idx = currentTrip.itinerary[dayKey].findIndex(i => i.id == id);
                 if (idx !== -1) currentTrip.itinerary[dayKey][idx] = newItem;
             } else {
-                // Create
                 currentTrip.itinerary[dayKey].push(newItem);
             }
 
-            saveAndRender();
-            closeModal();
+            saveTrip();
+            window.closeModal();
         }
 
-        function deleteCurrentItem() {
-            if (!confirm('確定要刪除此行程嗎？')) return;
+        window.editItem = function (id) {
+            const dayKey = `day${currentDayIndex + 1}`;
+            const item = currentTrip.itinerary[dayKey].find(i => i.id == id);
+            if (!item) return;
 
+            document.getElementById('itemId').value = item.id;
+            document.getElementById('itemTime').value = item.time;
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemDesc').value = item.desc || '';
+            document.getElementById('itemTag').value = item.tag || '景點';
+            document.getElementById('itemImage').value = item.image || '';
+
+            document.getElementById('modal-title').innerText = '編輯行程';
+            document.getElementById('deleteBtn').classList.remove('hidden');
+            window.openModal(true);
+        }
+
+        window.deleteCurrentItem = function () {
+            if (!confirm('確定刪除？')) return;
             const id = document.getElementById('itemId').value;
             const dayKey = `day${currentDayIndex + 1}`;
-
             currentTrip.itinerary[dayKey] = currentTrip.itinerary[dayKey].filter(i => i.id != id);
-
-            saveAndRender();
-            closeModal();
+            saveTrip();
+            window.closeModal();
         }
 
-
-
-        function getDefaultImage(tag) {
-            // Simple fallback placeholders
-            const map = {
-                '美食': 'https://images.unsplash.com/photo-1596450529940-f8ca4a08dbe1?auto=format&fit=crop&w=150',
-                '住宿': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150',
-                '交通': 'https://images.unsplash.com/photo-1555529733-0e670560f7e1?auto=format&fit=crop&w=150',
-                '購物': 'https://images.unsplash.com/photo-1481437156560-3205f6a55735?auto=format&fit=crop&w=150',
-                '景點': 'https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?auto=format&fit=crop&w=150'
-            };
-            return map[tag] || map['景點'];
+        window.shareTrip = function () {
+            const groupId = getGroupId();
+            alert(`目前位於群組：${groupId}\n請朋友在首頁輸入此 ID 即可同步編輯。`);
         }
 
-        function shareTrip() {
-            // Simple text export
-            let text = `行程：${currentTrip.name}\n`;
-            const date = tripDays[currentDayIndex].toLocaleDateString();
-            text += `日期：${date} (Day ${currentDayIndex + 1})\n\n`;
+        // --- Core Rendering ---
 
+        function renderAll() {
+            document.getElementById('header-title').innerText = currentTrip.name;
+
+            // Show Last Editor Info
+            if (currentTrip.lastEditor) {
+                document.getElementById('trip-date-display').innerHTML =
+                    `${new Date(currentTrip.start).toLocaleDateString()} <span class="ml-2 text-primary font-bold">✍️ ${currentTrip.lastEditor}</span>`;
+            } else {
+                document.getElementById('trip-date-display').innerText = new Date(currentTrip.start).toLocaleDateString();
+            }
+
+            // Calc Days
+            const start = new Date(currentTrip.start);
+            const end = new Date(currentTrip.end);
+            tripDays = [];
+            for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+                tripDays.push(new Date(dt));
+            }
+            if (currentDayIndex >= tripDays.length) currentDayIndex = 0;
+
+            renderTabs();
+            renderTimeline();
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('days-container');
+            container.innerHTML = tripDays.map((date, index) => {
+                const isActive = index === currentDayIndex;
+                const dayName = `Day ${index + 1}`;
+                const dayNum = date.getDate();
+                return `
+                    <button onclick="switchDay(${index})" 
+                        class="flex flex-col items-center min-w-[64px] p-2 rounded-2xl transition-all ${isActive ? 'bg-primary text-primary-content shadow-lg shadow-primary/20 scale-105' : 'bg-white dark:bg-surface-dark border border-transparent'}">
+                        <span class="text-xs font-bold opacity-80">${dayName}</span>
+                        <span class="text-lg font-black">${dayNum}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('trip-day-display').innerText = `Day ${currentDayIndex + 1}`;
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('itinerary-timeline');
             const dayKey = `day${currentDayIndex + 1}`;
             const items = (currentTrip.itinerary && currentTrip.itinerary[dayKey]) ? currentTrip.itinerary[dayKey] : [];
             items.sort((a, b) => a.time.localeCompare(b.time));
 
-            items.forEach(i => {
-                text += `${i.time} ${i.name}\n${i.desc ? `(${i.desc})\n` : ''}\n`;
-            });
+            document.getElementById('items-count').innerText = `${items.length} 行程`;
 
-            navigator.clipboard.writeText(text).then(() => alert('行程文字已複製！'));
+            if (items.length === 0) {
+                container.innerHTML = `<div class="absolute bottom-0 left-[23px] top-2 w-0.5 bg-gray-200 dark:bg-gray-800"></div><div class="pl-12 py-10 text-slate-400 text-sm italic">點擊右下角 + 新增行程</div>`;
+                return;
+            }
+
+            let html = '<div class="absolute bottom-0 left-[23px] top-2 w-0.5 bg-gray-200 dark:bg-gray-800"></div>';
+            items.forEach((item, index) => {
+                const tag = item.tag || '一般';
+                const image = item.image || getDefaultImage(tag);
+
+                html += `
+                <div class="relative mb-6 pl-8 group">
+                    <div class="absolute left-[15px] top-6 z-10 box-border size-4 -translate-x-1/2 rounded-full border-[3px] border-background-light bg-primary dark:border-background-dark group-hover:scale-125 transition-transform"></div>
+                    <div class="mb-1 flex items-center gap-2">
+                        <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">${item.time}</span>
+                    </div>
+                    <div class="flex gap-4 overflow-hidden rounded-2xl bg-card-light dark:bg-card-dark shadow-soft p-3 pr-4 transition-transform border border-transparent hover:border-primary/30 cursor-pointer" onclick="editItem(${item.id})">
+                        <div class="relative aspect-square w-20 shrink-0 rounded-xl overflow-hidden bg-gray-200">
+                             <img src="${image}" class="h-full w-full object-cover" />
+                        </div>
+                        <div class="flex flex-col justify-center min-w-0 flex-1">
+                            <h3 class="text-base font-bold text-text-main-light dark:text-text-main-dark truncate">${item.name}</h3>
+                            <p class="text-xs text-text-sub-light dark:text-text-sub-dark line-clamp-2 mt-1">${item.desc || '無備註'}</p>
+                            <div class="flex gap-2 mt-2">
+                                <span class="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">${tag}</span>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-gray-300">chevron_right</span>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function saveTrip() {
+            updateTrip(currentTrip);
+        }
+
+        function getDefaultImage(tag) {
+            const map = {
+                '景點': 'https://images.unsplash.com/photo-1528361855426-3d2315b9c7b1?w=200&h=200&fit=crop',
+                '美食': 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=200&h=200&fit=crop',
+                '交通': 'https://images.unsplash.com/photo-1550509657-3b2d12e69784?w=200&h=200&fit=crop',
+                '住宿': 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=200&h=200&fit=crop',
+                '購物': 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&h=200&fit=crop',
+            };
+            return map[tag] || map['景點'];
         }
     </script>
 </body>

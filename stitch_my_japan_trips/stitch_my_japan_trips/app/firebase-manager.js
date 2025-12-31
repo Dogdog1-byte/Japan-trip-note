@@ -1,0 +1,129 @@
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, set, onValue, push, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+// Configuration keys
+const KEY_DB_URL = 'firebase_db_url';
+const KEY_USER_NAME = 'user_name';
+const KEY_GROUP_ID = 'group_id'; // New: The shared "password" for the group
+
+let app = null;
+let db = null;
+let currentUser = null;
+let currentGroup = null;
+
+// Initialize automatically if configs exist
+export function initApp() {
+    const dbUrl = localStorage.getItem(KEY_DB_URL);
+    const userName = localStorage.getItem(KEY_USER_NAME);
+    const groupId = localStorage.getItem(KEY_GROUP_ID);
+
+    if (dbUrl && userName && groupId) {
+        connectFirebase(dbUrl, userName, groupId);
+        return true; // Attempting connection
+    }
+    return false; // Needs setup
+}
+
+export function connectFirebase(dbUrl, userName, groupId) {
+    if (!dbUrl) return;
+
+    // Save locally
+    localStorage.setItem(KEY_DB_URL, dbUrl);
+    localStorage.setItem(KEY_USER_NAME, userName);
+    localStorage.setItem(KEY_GROUP_ID, groupId);
+
+    currentUser = userName;
+    currentGroup = groupId;
+
+    try {
+        let projectId = 'japan-trip';
+        try {
+            const url = new URL(dbUrl);
+            const hostParts = url.hostname.split('.');
+            if (hostParts[0]) projectId = hostParts[0].replace('-default-rtdb', '');
+        } catch (e) { }
+
+        const config = {
+            apiKey: "dummy-api-key",
+            databaseURL: dbUrl,
+            projectId: projectId
+        };
+
+        app = initializeApp(config);
+        db = getDatabase(app);
+        console.log(`Connected to group: ${groupId} as ${userName}`);
+        return true;
+    } catch (e) {
+        console.error("Firebase Connection Failed", e);
+        alert("連線失敗，請檢查網址");
+        return false;
+    }
+}
+
+// Sync Trips List (for trips.html)
+export function syncTripsList(callback) {
+    if (!db || !currentGroup) return;
+
+    const tripsRef = ref(db, `groups/${currentGroup}/trips`);
+    onValue(tripsRef, (snapshot) => {
+        const data = snapshot.val();
+        const trips = data ? Object.values(data) : [];
+        // Sort by start date
+        trips.sort((a, b) => new Date(a.start) - new Date(b.start));
+        callback(trips);
+    });
+}
+
+// Create New Trip
+export function createTrip(tripData) {
+    if (!db || !currentGroup) {
+        alert("請先設定同步群組");
+        return;
+    }
+
+    // Auto add ID if not present
+    if (!tripData.id) tripData.id = Date.now();
+    tripData.createdBy = currentUser;
+    tripData.createdAt = new Date().toISOString();
+
+    const tripRef = ref(db, `groups/${currentGroup}/trips/${tripData.id}`);
+    return set(tripRef, tripData);
+}
+
+// Listen to Single Trip (for detail.html)
+export function listenToTrip(tripId, callback) {
+    if (!db || !currentGroup) return;
+
+    const tripRef = ref(db, `groups/${currentGroup}/trips/${tripId}`);
+    onValue(tripRef, (snapshot) => {
+        const trip = snapshot.val();
+        callback(trip);
+    });
+}
+
+// Update Trip (with Editor tracking)
+export function updateTrip(tripData) {
+    if (!db || !currentGroup) return;
+
+    tripData.lastEditor = currentUser;
+    tripData.lastEditedAt = new Date().toLocaleString('zh-TW'); // Readablestring
+
+    const tripRef = ref(db, `groups/${currentGroup}/trips/${tripData.id}`);
+    return update(tripRef, tripData);
+}
+
+// Delete Trip
+export function deleteTrip(tripId) {
+    if (!db || !currentGroup) return;
+    const tripRef = ref(db, `groups/${currentGroup}/trips/${tripId}`);
+    return remove(tripRef);
+}
+
+export function getUserName() {
+    return localStorage.getItem(KEY_USER_NAME) || '訪客';
+}
+
+export function getGroupId() {
+    return localStorage.getItem(KEY_GROUP_ID);
+}
