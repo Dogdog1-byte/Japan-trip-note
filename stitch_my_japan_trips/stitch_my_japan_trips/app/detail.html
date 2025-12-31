@@ -139,9 +139,15 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">名稱</label>
-                    <input type="text" id="itemName" required placeholder="例如：清水寺"
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">名稱 (選填)</label>
+                    <input type="text" id="itemName" placeholder="例如：清水寺"
                         class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">網址 (選填)</label>
+                    <input type="url" id="itemUrl" placeholder="https://..."
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
                 </div>
 
                 <div>
@@ -275,6 +281,7 @@
                 document.getElementById('deleteBtn').classList.add('hidden');
                 document.getElementById('itemTime').value = '09:00';
                 document.getElementById('imagePreview').classList.add('hidden');
+                document.getElementById('itemUrl').value = '';
             } else {
                 const imgUrl = document.getElementById('itemImage').value;
                 if (imgUrl) {
@@ -316,10 +323,11 @@
             const newItem = {
                 id: id ? parseInt(id) : Date.now(),
                 time: document.getElementById('itemTime').value,
-                name: document.getElementById('itemName').value,
+                name: document.getElementById('itemName').value || '未命名項目',
                 desc: document.getElementById('itemDesc').value,
                 tag: document.getElementById('itemTag').value,
-                image: document.getElementById('itemImage').value
+                image: document.getElementById('itemImage').value,
+                link: document.getElementById('itemUrl').value
             };
 
             if (id) {
@@ -344,6 +352,7 @@
             document.getElementById('itemDesc').value = item.desc || '';
             document.getElementById('itemTag').value = item.tag || '景點';
             document.getElementById('itemImage').value = item.image || '';
+            document.getElementById('itemUrl').value = item.link || '';
 
             document.getElementById('modal-title').innerText = '編輯行程';
             document.getElementById('deleteBtn').classList.remove('hidden');
@@ -457,8 +466,13 @@
                         <div class="flex flex-col justify-center min-w-0 flex-1">
                             <h3 class="text-base font-bold text-text-main-light dark:text-text-main-dark truncate">${item.name}</h3>
                             <p class="text-xs text-text-sub-light dark:text-text-sub-dark line-clamp-2 mt-1">${item.desc || '無備註'}</p>
-                            <div class="flex gap-2 mt-2">
+                            <div class="flex items-center gap-2 mt-2">
                                 <span class="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">${tag}</span>
+                                ${item.link ? `
+                                    <a href="${item.link}" target="_blank" onclick="event.stopPropagation()" class="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded hover:bg-primary/20 transition">
+                                        <span class="material-symbols-outlined text-xs">link</span> 連結
+                                    </a>
+                                ` : ''}
                             </div>
                         </div>
                         <span class="material-symbols-outlined text-gray-300">chevron_right</span>
