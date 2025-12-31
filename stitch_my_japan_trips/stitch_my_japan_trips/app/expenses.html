@@ -374,40 +374,49 @@
             e.preventDefault();
             if (!currentTrip) return;
 
-            const amountJpy = parseInt(document.getElementById('expAmount').value);
-            const participants = Array.from(document.querySelectorAll('input[name="participant"]:checked')).map(i => i.value);
-            const payer = document.getElementById('expPayer').value;
+            try {
+                const amountJpy = parseInt(document.getElementById('expAmount').value);
+                const participants = Array.from(document.querySelectorAll('input[name="participant"]:checked')).map(i => i.value);
+                const payer = document.getElementById('expPayer').value;
 
-            if (isNaN(amountJpy) || amountJpy <= 0) {
-                alert("請輸入正確金額");
-                return;
+                if (isNaN(amountJpy) || amountJpy <= 0) {
+                    alert("請輸入正確金額");
+                    return;
+                }
+
+                if (participants.length === 0) {
+                    alert("請至少選擇一位分帳成員");
+                    return;
+                }
+
+                const expense = {
+                    id: Date.now(),
+                    amount: amountJpy,
+                    amountTwd: Math.round(amountJpy * (exchangeRate || 0.22)),
+                    category: document.getElementById('expCategory').value,
+                    title: document.getElementById('expTitle').value,
+                    method: document.getElementById('expMethod').value,
+                    desc: document.getElementById('expDesc').value,
+                    url: document.getElementById('expUrl').value,
+                    payer: payer,
+                    participants: participants,
+                    time: new Date().toISOString()
+                };
+
+                // Normalize expenses to array
+                const rawExpenses = currentTrip.expenses || [];
+                const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
+                expensesArray.push(expense);
+                currentTrip.expenses = expensesArray;
+
+                updateTrip(currentTrip);
+                renderExpenses();
+                window.closeModal();
+            } catch (err) {
+                console.error("Save expense failed", err);
+                // Fallback to close modal anyway so it doesn't get stuck
+                window.closeModal();
             }
-
-            if (participants.length === 0) {
-                alert("請至少選擇一位分帳成員");
-                return;
-            }
-
-            const expense = {
-                id: Date.now(),
-                amount: amountJpy,
-                amountTwd: Math.round(amountJpy * exchangeRate),
-                category: document.getElementById('expCategory').value,
-                title: document.getElementById('expTitle').value,
-                method: document.getElementById('expMethod').value,
-                desc: document.getElementById('expDesc').value,
-                url: document.getElementById('expUrl').value,
-                payer: payer,
-                participants: participants,
-                time: new Date().toISOString()
-            };
-
-            if (!currentTrip.expenses) currentTrip.expenses = [];
-            currentTrip.expenses.push(expense);
-
-            updateTrip(currentTrip);
-            renderExpenses();
-            window.closeModal();
         }
 
         window.deleteExpense = function (expId) {
