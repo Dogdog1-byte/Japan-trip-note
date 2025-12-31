@@ -127,10 +127,22 @@
             </div>
 
             <!-- Settlement Summary -->
-            <div id="settlement-section" class="mb-20 hidden">
-                <div class="flex items-center gap-2 mb-4 px-2">
+            <div id="settlement-section" class="mb-20 hidden px-2">
+                <div class="flex items-center gap-2 mb-4">
                     <span class="material-symbols-outlined text-primary">analytics</span>
-                    <h3 class="text-lg font-bold">結算分析 (誰該給誰)</h3>
+                    <h3 class="text-lg font-bold">支出統計與結算</h3>
+                </div>
+
+                <!-- Individual Stats -->
+                <div class="mb-6 overflow-x-auto pb-2">
+                    <div id="member-stats-list" class="flex gap-3">
+                        <!-- Individual Stats Injected Here -->
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 mb-3 px-1">
+                    <span class="text-[10px] font-black text-text-sub-light opacity-50 uppercase tracking-wider">債務結算
+                        (誰該給誰)</span>
                 </div>
                 <div id="settlement-list" class="space-y-3">
                     <!-- Settlement Items Injected Here -->
@@ -594,8 +606,15 @@
             if (!currentTrip || !currentTrip.expenses) return;
 
             const balances = {};
+            const totalPaid = {};
+            const totalConsumed = {};
             const members = currentTrip.members || [getUserName()];
-            members.forEach(m => balances[m] = 0);
+
+            members.forEach(m => {
+                balances[m] = 0;
+                totalPaid[m] = 0;
+                totalConsumed[m] = 0;
+            });
 
             const rawExpenses = currentTrip.expenses || [];
             const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
@@ -605,14 +624,19 @@
                 const payer = exp.payer;
                 const participants = exp.participants || [payer];
 
-                // Payer gets back the amount they paid
-                balances[payer] = (balances[payer] || 0) + amount;
+                // Total Paid
+                totalPaid[payer] = (totalPaid[payer] || 0) + amount;
 
-                // Each participant owes their share
+                // Individual Share
                 const share = amount / participants.length;
                 participants.forEach(p => {
-                    balances[p] = (balances[p] || 0) - share;
+                    totalConsumed[p] = (totalConsumed[p] || 0) + share;
                 });
+            });
+
+            // Calculate Balances
+            members.forEach(m => {
+                balances[m] = totalPaid[m] - totalConsumed[m];
             });
 
             const settlementSection = document.getElementById('settlement-section');
@@ -643,7 +667,25 @@
                 if (debtors[j].balance < 1) j++;
             }
 
-            if (transactions.length > 0) {
+            // Render Member Stats
+            const statsList = document.getElementById('member-stats-list');
+            statsList.innerHTML = members.map(m => `
+                <div class="bg-surface-light dark:bg-white/5 border border-gray-100 dark:border-white/10 p-3 rounded-2xl min-w-[140px] shrink-0">
+                    <div class="text-[10px] font-black text-text-sub-light mb-2 truncate">${m}</div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-end gap-2">
+                            <span class="text-[9px] opacity-60">墊付</span>
+                            <span class="text-xs font-bold font-mono">¥${Math.round(totalPaid[m]).toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between items-end gap-2">
+                            <span class="text-[9px] opacity-60">消費</span>
+                            <span class="text-xs font-bold font-mono text-primary">¥${Math.round(totalConsumed[m]).toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            if (transactions.length > 0 || members.some(m => totalPaid[m] > 0)) {
                 settlementSection.classList.remove('hidden');
                 settlementList.innerHTML = transactions.map(t => `
                     <div class="bg-primary/5 border border-primary/10 p-3 rounded-xl flex items-center justify-between">
