@@ -410,6 +410,8 @@
             void modalOverlay.offsetWidth;
             modalOverlay.classList.remove('opacity-0');
             modalContent.classList.remove('translate-y-full');
+            modalContent.style.transform = ''; // Reset swipe transform
+            modalContent.style.transition = ''; // Reset swipe transition
             document.getElementById('expenseForm').reset();
             updateParticipantList(); // Ensure fresh list
         }
@@ -418,7 +420,10 @@
             const modalOverlay = document.getElementById('modal-overlay');
             const modalContent = document.getElementById('modal-content');
             if (modalOverlay) modalOverlay.classList.add('opacity-0');
-            if (modalContent) modalContent.classList.add('translate-y-full');
+            if (modalContent) {
+                modalContent.classList.add('translate-y-full');
+                modalContent.style.transform = ''; // Reset swipe transform
+            }
             setTimeout(() => {
                 if (modalOverlay) modalOverlay.classList.add('hidden');
                 document.body.style.overflow = ''; // Restore scroll
