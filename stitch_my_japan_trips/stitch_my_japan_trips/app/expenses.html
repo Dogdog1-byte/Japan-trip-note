@@ -38,6 +38,35 @@
             },
         }
     </script>
+    <style>
+        .swipe-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+        }
+
+        .swipe-item {
+            transition: transform 0.2s ease-out;
+            will-change: transform;
+            position: relative;
+            z-index: 2;
+        }
+
+        .swipe-action {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            background: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 1;
+            border-radius: 0 1rem 1rem 0;
+        }
+    </style>
 </head>
 
 <body
@@ -123,22 +152,22 @@
             class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"
             onclick="closeModal()"></div>
         <div id="modal-content"
-            class="fixed bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto max-w-md mx-auto">
-            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+            class="fixed bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark rounded-t-3xl p-4 transform translate-y-full transition-transform duration-300 max-h-[90vh] overflow-y-auto max-w-md mx-auto">
+            <div class="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-4"></div>
 
-            <h3 class="text-xl font-bold mb-6">新增支出</h3>
+            <h3 class="text-lg font-bold mb-4">新增支出</h3>
 
-            <form id="expenseForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
-                <div class="grid grid-cols-2 gap-4">
+            <form id="expenseForm" onsubmit="handleFormSubmit(event)" class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">金額 (¥)</label>
+                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">金額 (¥)</label>
                         <input type="number" id="expAmount" required placeholder="0"
-                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-lg font-bold focus:ring-1 focus:ring-primary">
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-base font-bold focus:ring-1 focus:ring-primary">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">類別</label>
+                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">類別</label>
                         <select id="expCategory"
-                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 font-medium focus:ring-1 focus:ring-primary">
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-sm font-medium focus:ring-1 focus:ring-primary">
                             <option value="美食">🍜 美食</option>
                             <option value="交通">🚄 交通</option>
                             <option value="購物">🛍️ 購物</option>
@@ -150,53 +179,54 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">支出名稱</label>
+                    <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">支出名稱</label>
                     <input type="text" id="expTitle" required placeholder="例如：一蘭拉麵"
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-sm font-bold focus:ring-1 focus:ring-primary">
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">付款人 (誰墊錢)</label>
+                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">付款人</label>
                         <select id="expPayer"
-                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-base font-bold focus:ring-1 focus:ring-primary">
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-sm font-bold focus:ring-1 focus:ring-primary">
                             <!-- Members Injected Here -->
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">分帳成員</label>
+                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">分帳成員</label>
                         <div id="split-participants"
-                            class="flex flex-col gap-1 bg-gray-50 dark:bg-black/20 rounded-xl p-2 max-h-32 overflow-y-auto">
+                            class="flex flex-col gap-1 bg-gray-50 dark:bg-black/20 rounded-xl p-1.5 max-h-24 overflow-y-auto">
                             <!-- Participant Checkboxes Injected Here -->
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">支付方式</label>
-                    <select id="expMethod"
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
-                        <option value="現金">💵 現金</option>
-                        <option value="信用卡">💳 信用卡</option>
-                        <option value="其他">🔘 其他</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">支付方式</label>
+                        <select id="expMethod"
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-sm font-bold focus:ring-1 focus:ring-primary">
+                            <option value="現金">💵 現金</option>
+                            <option value="信用卡">💳 信用卡</option>
+                            <option value="其他">🔘 其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">備註 (選填)</label>
+                        <textarea id="expDesc" placeholder="備註..." rows="1"
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-primary resize-none min-h-[42px]"></textarea>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">備註 (選填)</label>
-                    <textarea id="expDesc" placeholder="例如：某支某店買的..." rows="3"
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary resize-y min-h-[80px]"></textarea>
+                    <label class="block text-[10px] font-bold mb-1 ml-1 text-text-sub-light">參考網址 (選填)</label>
+                    <input type="url" id="expUrl" placeholder="https://..."
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-primary">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">參考網址 (選填)</label>
-                    <input type="url" id="expUrl" placeholder="https://maps.app.goo.gl/..."
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
-                </div>
-
-                <div class="pt-4">
+                <div class="pt-2">
                     <button type="submit" id="saveExpenseBtn"
-                        class="w-full py-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                        class="w-full py-3.5 bg-primary text-primary-content rounded-2xl font-bold text-base shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                         儲存支出
                     </button>
                 </div>
@@ -476,36 +506,44 @@
                 const splitText = exp.participants ? `💸 ${exp.payer} 墊 / ${exp.participants.length}人分 (每人 ¥${perPerson})` : exp.payer;
 
                 return `
-                    <div class="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition group relative">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-3">
-                                <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                    <span class="material-symbols-outlined text-xl">${getCatIcon(exp.category)}</span>
-                                </div>
-                                <div class="min-w-0">
-                                    <h4 class="font-bold text-base truncate">${exp.title}</h4>
-                                    <p class="text-[10px] text-text-sub-light truncate">${exp.method || '現金'} · ${splitText}</p>
-                                </div>
-                            </div>
-                            <div class="text-right flex flex-col items-end">
-                                <p class="font-black text-lg text-primary">¥ ${exp.amount.toLocaleString()}</p>
-                                <p class="text-[10px] text-text-sub-light">≈ NT$ ${(exp.amountTwd || 0).toLocaleString()}</p>
-                                ${exp.url ? `
-                                    <a href="${exp.url}" target="_blank" class="mt-2 text-primary flex items-center gap-0.5">
-                                        <span class="material-symbols-outlined text-xs">link</span>
-                                        <span class="text-[10px] font-bold">查看網址</span>
-                                    </a>
-                                ` : ''}
-                            </div>
+                    <div class="swipe-container mb-4">
+                        <div class="swipe-action" onclick="deleteExpense(${exp.id})">
+                            <span class="material-symbols-outlined">delete</span>
                         </div>
-                        ${exp.desc ? `
-                            <div class="mt-3 pt-3 border-t border-gray-50 dark:border-white/5 text-[11px] text-text-sub-light italic leading-relaxed whitespace-pre-wrap">
-                                ${exp.desc}
+                        <div class="swipe-item bg-white dark:bg-surface-dark p-4 shadow-sm border border-transparent hover:border-primary/20 transition group relative"
+                             ontouchstart="handleSwipeStart(event)" 
+                             ontouchmove="handleSwipeMove(event)" 
+                             ontouchend="handleSwipeEnd(event, ${exp.id})">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                        <span class="material-symbols-outlined text-xl">${getCatIcon(exp.category)}</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="font-bold text-base truncate">${exp.title}</h4>
+                                        <p class="text-[10px] text-text-sub-light truncate">${exp.method || '現金'} · ${splitText}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right flex flex-col items-end">
+                                    <p class="font-black text-lg text-primary">¥ ${exp.amount.toLocaleString()}</p>
+                                    <p class="text-[10px] text-text-sub-light">≈ NT$ ${(exp.amountTwd || 0).toLocaleString()}</p>
+                                    ${exp.url ? `
+                                        <a href="${exp.url}" target="_blank" class="mt-2 text-primary flex items-center gap-0.5">
+                                            <span class="material-symbols-outlined text-xs">link</span>
+                                            <span class="text-[10px] font-bold">查看網址</span>
+                                        </a>
+                                    ` : ''}
+                                </div>
                             </div>
-                        ` : ''}
-                        <button onclick="deleteExpense(${exp.id})" class="absolute -top-1 -right-1 size-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg z-10">
-                            <span class="material-symbols-outlined text-xs">close</span>
-                        </button>
+                            ${exp.desc ? `
+                                <div class="mt-3 pt-3 border-t border-gray-50 dark:border-white/5 text-[11px] text-text-sub-light italic leading-relaxed whitespace-pre-wrap">
+                                    ${exp.desc}
+                                </div>
+                            ` : ''}
+                            <button onclick="deleteExpense(${exp.id})" class="absolute -top-1 -right-1 size-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg z-10 md:flex hidden">
+                                <span class="material-symbols-outlined text-xs">close</span>
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -605,6 +643,40 @@
                 '其他': 'box'
             };
             return map[cat] || 'payments';
+        }
+
+        // Swipe-to-delete Logic
+        let swipeStartX = 0;
+        let currentSwipeEl = null;
+
+        window.handleSwipeStart = function (e) {
+            swipeStartX = e.touches[0].clientX;
+            currentSwipeEl = e.currentTarget;
+            currentSwipeEl.style.transition = 'none';
+        }
+
+        window.handleSwipeMove = function (e) {
+            if (!currentSwipeEl) return;
+            const diff = e.touches[0].clientX - swipeStartX;
+            if (diff < 0) { // Swipe left
+                const translate = Math.max(diff, -100);
+                currentSwipeEl.style.transform = `translateX(${translate}px)`;
+            } else {
+                currentSwipeEl.style.transform = `translateX(0px)`;
+            }
+        }
+
+        window.handleSwipeEnd = function (e, id) {
+            if (!currentSwipeEl) return;
+            const diff = e.changedTouches[0].clientX - swipeStartX;
+            currentSwipeEl.style.transition = 'transform 0.2s ease-out';
+
+            if (diff < -60) {
+                currentSwipeEl.style.transform = `translateX(-80px)`;
+            } else {
+                currentSwipeEl.style.transform = `translateX(0)`;
+            }
+            currentSwipeEl = null;
         }
     </script>
 </body>
