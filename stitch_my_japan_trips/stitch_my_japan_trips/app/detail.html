@@ -110,7 +110,9 @@
             onclick="closeModal()"></div>
         <div id="modal-content"
             class="fixed bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto max-w-md mx-auto">
-            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+            <div id="drag-handle"
+                class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 cursor-grab active:cursor-grabbing">
+            </div>
 
             <div class="flex justify-between items-center mb-6">
                 <h3 id="modal-title" class="text-xl font-bold">新增行程</h3>
@@ -276,14 +278,13 @@
             renderTimeline();
         }
 
-        window.openModal = function (isEdit = false) {
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modalContent = document.getElementById('modal-content');
-            modalOverlay.classList.remove('hidden');
-            void modalOverlay.offsetWidth; // trigger reflow
-            modalOverlay.classList.remove('opacity-0');
-            modalContent.classList.remove('translate-y-full');
+        // Modal Swipe-to-close logic
+        let touchStartY = 0;
+        let currentTranslateY = 0;
+        const modalContent = document.getElementById('modal-content');
+        const modalOverlay = document.getElementById('modal-overlay');
 
+        window.openModal = function (isEdit = false) {
             if (!isEdit) {
                 document.getElementById('itemForm').reset();
                 document.getElementById('itemId').value = '';
@@ -299,15 +300,51 @@
                     document.getElementById('imagePreview').classList.remove('hidden');
                 }
             }
+
+            modalOverlay.classList.remove('hidden');
+            void modalOverlay.offsetWidth; // trigger reflow
+            modalOverlay.classList.remove('opacity-0');
+            modalContent.classList.remove('translate-y-full');
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
         }
 
         window.closeModal = function () {
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modalContent = document.getElementById('modal-content');
             modalOverlay.classList.add('opacity-0');
             modalContent.classList.add('translate-y-full');
-            setTimeout(() => modalOverlay.classList.add('hidden'), 300);
+            modalContent.style.transform = ''; // Clear drag transform
+            setTimeout(() => {
+                modalOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
         }
+
+        // Swipe events
+        modalContent.addEventListener('touchstart', (e) => {
+            if (modalContent.scrollTop > 0) return; // Only drag if at top
+            touchStartY = e.touches[0].clientY;
+            modalContent.classList.remove('transition-transform');
+        });
+
+        modalContent.addEventListener('touchmove', (e) => {
+            if (modalContent.scrollTop > 0) return;
+            const touchY = e.touches[0].clientY;
+            const deltaY = touchY - touchStartY;
+            if (deltaY > 0) {
+                e.preventDefault();
+                currentTranslateY = deltaY;
+                modalContent.style.transform = `translateY(${deltaY}px)`;
+            }
+        }, { passive: false });
+
+        modalContent.addEventListener('touchend', () => {
+            if (currentTranslateY > 150) {
+                closeModal();
+            } else {
+                modalContent.classList.add('transition-transform');
+                modalContent.style.transform = '';
+            }
+            currentTranslateY = 0;
+        });
 
         window.handleImageUpload = function (event) {
             const file = event.target.files[0];

@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, onValue, push, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getDatabase, ref, set, onValue, push, update, remove, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
 // Configuration keys
 const KEY_DB_URL = 'firebase_db_url';
@@ -126,4 +126,23 @@ export function getUserName() {
 
 export function getGroupId() {
     return localStorage.getItem(KEY_GROUP_ID);
+}
+
+// User Settings Persistence
+export async function saveUserSettings(settings) {
+    if (!db || !currentGroup || !currentUser) return;
+    const userSettingsRef = ref(db, `groups/${currentGroup}/users/${currentUser}/settings`);
+    return set(userSettingsRef, settings);
+}
+
+export async function loadUserSettings() {
+    if (!db || !currentGroup || !currentUser) return null;
+    const userSettingsRef = ref(db, `groups/${currentGroup}/users/${currentUser}/settings`);
+    try {
+        const snapshot = await get(userSettingsRef);
+        return snapshot.exists() ? snapshot.val() : null;
+    } catch (e) {
+        console.error("Failed to load user settings", e);
+        return null;
+    }
 }

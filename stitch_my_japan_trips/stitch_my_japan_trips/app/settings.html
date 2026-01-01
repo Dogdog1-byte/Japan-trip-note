@@ -177,12 +177,15 @@
 
     <!-- Theme & Firebase Logic -->
     <script type="module">
-        import { initTheme, applyTheme, getTheme } from './theme-manager.js';
+        import { initTheme, applyTheme, getTheme, syncThemeWithFirebase } from './theme-manager.js';
         import { initApp, getUserName, getGroupId } from './firebase-manager.js';
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             initApp();
             initTheme();
+
+            // Sync from Firebase if logged in
+            await syncThemeWithFirebase();
 
             // Auto Dark Mode setup
             const darkMode = localStorage.getItem('darkMode') === 'true';
@@ -202,12 +205,12 @@
         window.updateThemeColors = function () {
             const primary = document.getElementById('primaryColorPicker').value;
             const bgLight = document.getElementById('bgColorPicker').value;
-            applyTheme(primary, bgLight);
+            applyTheme(primary, bgLight, true); // true means save to Firebase
         }
 
         window.resetTheme = function () {
             if (confirm("確定要恢復預設顏色嗎？")) {
-                applyTheme('#2563EB', '#eff6ff');
+                applyTheme('#2563EB', '#eff6ff', true); // true means save to Firebase
                 document.getElementById('primaryColorPicker').value = '#2563EB';
                 document.getElementById('bgColorPicker').value = '#eff6ff';
             }

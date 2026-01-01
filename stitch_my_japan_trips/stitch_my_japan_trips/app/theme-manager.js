@@ -1,7 +1,4 @@
-/**
- * Theme Manager for Stitch My Japan Trips
- * Handles custom primary and background colors using CSS variables.
- */
+import { saveUserSettings, loadUserSettings } from './firebase-manager.js';
 
 const DEFAULT_THEME = {
     primary: '#2563EB',
@@ -15,7 +12,7 @@ export function initTheme() {
     applyTheme(primary, bgLight);
 }
 
-export function applyTheme(primary, bgLight) {
+export async function applyTheme(primary, bgLight, shouldSaveToFirebase = false) {
     const root = document.documentElement;
     root.style.setProperty('--primary-color', primary);
     root.style.setProperty('--background-light-color', bgLight);
@@ -23,6 +20,19 @@ export function applyTheme(primary, bgLight) {
     // Also save to localStorage
     localStorage.setItem('theme_primary', primary);
     localStorage.setItem('theme_background_light', bgLight);
+
+    if (shouldSaveToFirebase) {
+        await saveUserSettings({ primary, backgroundLight: bgLight });
+    }
+}
+
+export async function syncThemeWithFirebase() {
+    const settings = await loadUserSettings();
+    if (settings && settings.primary && settings.backgroundLight) {
+        applyTheme(settings.primary, settings.backgroundLight, false);
+        return true;
+    }
+    return false;
 }
 
 export function getTheme() {

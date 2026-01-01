@@ -117,12 +117,114 @@
             </div>
         </main>
 
+        <!-- Create Trip Modal -->
+        <div id="modal-overlay"
+            class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"
+            onclick="closeModal()"></div>
+        <div id="modal-content"
+            class="fixed bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300 max-h-[90vh] overflow-y-auto max-w-md mx-auto">
+            <div id="drag-handle"
+                class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 cursor-grab active:cursor-grabbing">
+            </div>
+
+            <div class="flex justify-between items-center mb-6 px-2">
+                <div>
+                    <h3 class="text-2xl font-extrabold">建立新行程</h3>
+                    <p class="text-xs text-text-sub-light dark:text-text-sub-dark mt-1">開始規劃您的下一段旅程</p>
+                </div>
+            </div>
+
+            <form id="tripForm" onsubmit="handleCreateTrip(event)" class="space-y-6 px-2 pb-10">
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold">行程名稱</label>
+                    <input type="text" id="tripName" placeholder="例如：東京五日遊" required
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary text-lg">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold">目的地</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-sub-light">flight_takeoff</span>
+                        <input type="text" id="tripDest" placeholder="例如：日本、大阪、京都"
+                            class="w-full pl-12 bg-gray-50 dark:bg-black/20 border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold">出發日期</label>
+                        <input type="date" id="startDate" required
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold">結束日期</label>
+                        <input type="date" id="endDate" required
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-2xl p-4 shadow-sm focus:ring-2 focus:ring-primary">
+                    </div>
+                </div>
+
+                <div
+                    class="space-y-4 bg-gray-50 dark:bg-black/10 p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-bold">旅行人數</label>
+                        <div class="flex items-center gap-4 bg-white dark:bg-black/20 rounded-full px-4 py-2 shadow-sm">
+                            <button type="button" onclick="changeTravelers(-1)"
+                                class="text-primary font-black text-xl hover:opacity-70">-</button>
+                            <span id="travelerCount" class="font-bold text-lg min-w-8 text-center">1</span>
+                            <button type="button" onclick="changeTravelers(1)"
+                                class="text-primary font-black text-xl hover:opacity-70">+</button>
+                        </div>
+                    </div>
+                    <div id="membersContainer" class="space-y-3">
+                        <label class="block text-xs font-bold text-text-sub-light">成員暱稱</label>
+                        <input type="text"
+                            class="member-nickname w-full bg-white dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary shadow-sm"
+                            placeholder="成員 1 暱稱">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold">封面圖片 (選填)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button"
+                            onclick="selectImage(this, 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600')"
+                            class="image-option rounded-xl overflow-hidden aspect-square border-4 border-primary hover:opacity-80 transition relative">
+                            <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=200"
+                                class="w-full h-full object-cover">
+                        </button>
+                        <button type="button"
+                            onclick="selectImage(this, 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600')"
+                            class="image-option rounded-xl overflow-hidden aspect-square border-4 border-transparent hover:opacity-80 transition relative">
+                            <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=200"
+                                class="w-full h-full object-cover">
+                        </button>
+                        <button type="button"
+                            onclick="selectImage(this, 'https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?auto=format&fit=crop&w=600')"
+                            class="image-option rounded-xl overflow-hidden aspect-square border-4 border-transparent hover:opacity-80 transition relative">
+                            <img src="https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?auto=format&fit=crop&w=200"
+                                class="w-full h-full object-cover">
+                        </button>
+                    </div>
+                    <input type="hidden" id="selectedImage"
+                        value="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600">
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform">
+                        建立行程
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- FAB -->
         <div class="fixed bottom-24 right-5 z-40">
-            <a href="create.html"
+            <button onclick="openModal()"
                 class="flex size-16 items-center justify-center rounded-full bg-text-main-light dark:bg-white text-white dark:text-black shadow-xl transition hover:scale-105 active:scale-95">
                 <span class="material-symbols-outlined" style="font-size: 32px;">add</span>
-            </a>
+            </button>
         </div>
 
         <!-- Bottom Navigation -->
@@ -154,7 +256,7 @@
     </div>
 
     <script type="module">
-        import './theme-manager.js';
+        import { syncThemeWithFirebase } from './theme-manager.js';
         import { initApp, connectFirebase, syncTripsList, deleteTrip, getUserName, getGroupId } from './firebase-manager.js';
 
         // Auto Dark Mode
@@ -193,8 +295,11 @@
             });
         });
 
-        function startSync() {
+        async function startSync() {
             document.getElementById('displayGroup').innerText = getGroupId();
+
+            // Sync user preference from Firebase
+            await syncThemeWithFirebase();
 
             syncTripsList((trips) => {
                 const list = document.getElementById('tripsList');
@@ -235,6 +340,123 @@
                     `;
                     list.appendChild(card);
                 });
+            });
+        }
+
+        // Modal Swipe-to-close logic
+        let touchStartY = 0;
+        let currentTranslateY = 0;
+        const modalContent = document.getElementById('modal-content');
+        const modalOverlay = document.getElementById('modal-overlay');
+
+        window.openModal = function () {
+            // Reset form
+            document.getElementById('tripForm').reset();
+            document.getElementById('travelerCount').innerText = '1';
+            document.getElementById('membersContainer').innerHTML = '<label class="block text-xs font-bold text-text-sub-light">成員暱稱</label><input type="text" class="member-nickname w-full bg-white dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary shadow-sm" placeholder="成員 1 暱稱">';
+
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+
+            modalOverlay.classList.remove('hidden');
+            void modalOverlay.offsetWidth;
+            modalOverlay.classList.remove('opacity-0');
+            modalContent.classList.remove('translate-y-full');
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
+        }
+
+        window.closeModal = function () {
+            modalOverlay.classList.add('opacity-0');
+            modalContent.classList.add('translate-y-full');
+            modalContent.style.transform = ''; // Clear drag transform
+            setTimeout(() => {
+                modalOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // Swipe events
+        modalContent.addEventListener('touchstart', (e) => {
+            if (modalContent.scrollTop > 0) return; // Only drag if at top
+            touchStartY = e.touches[0].clientY;
+            modalContent.classList.remove('transition-transform');
+        });
+
+        modalContent.addEventListener('touchmove', (e) => {
+            if (modalContent.scrollTop > 0) return;
+            const touchY = e.touches[0].clientY;
+            const deltaY = touchY - touchStartY;
+            if (deltaY > 0) {
+                e.preventDefault();
+                currentTranslateY = deltaY;
+                modalContent.style.transform = `translateY(${deltaY}px)`;
+            }
+        }, { passive: false });
+
+        modalContent.addEventListener('touchend', () => {
+            if (currentTranslateY > 150) {
+                closeModal();
+            } else {
+                modalContent.classList.add('transition-transform');
+                modalContent.style.transform = '';
+            }
+            currentTranslateY = 0;
+        });
+
+        window.changeTravelers = function (delta) {
+            const countEl = document.getElementById('travelerCount');
+            let count = parseInt(countEl.innerText) + delta;
+            if (count < 1) count = 1;
+            if (count > 20) count = 20;
+            countEl.innerText = count;
+
+            const container = document.getElementById('membersContainer');
+            const currentNicknames = Array.from(document.querySelectorAll('.member-nickname')).map(input => input.value);
+            let html = '<label class="block text-xs font-bold text-text-sub-light">成員暱稱</label>';
+            for (let i = 0; i < count; i++) {
+                const val = currentNicknames[i] || '';
+                html += `<input type="text" class="member-nickname w-full bg-white dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary shadow-sm" placeholder="成員 ${i + 1} 暱稱" value="${val}">`;
+            }
+            container.innerHTML = html;
+        };
+
+        window.selectImage = function (btn, url) {
+            document.querySelectorAll('.image-option').forEach(b => b.classList.remove('border-primary'));
+            btn.classList.add('border-primary');
+            document.getElementById('selectedImage').value = url;
+        }
+
+        window.handleCreateTrip = function (e) {
+            e.preventDefault();
+            const name = document.getElementById('tripName').value.trim();
+            const dest = document.getElementById('tripDest').value.trim();
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const image = document.getElementById('selectedImage').value;
+
+            if (new Date(end) < new Date(start)) return alert('結束日期不能早於出發日期');
+
+            const nicknames = Array.from(document.querySelectorAll('.member-nickname'))
+                .map(input => input.value.trim())
+                .filter(name => name !== '');
+
+            const newId = Date.now();
+            const newTrip = {
+                id: newId,
+                name, dest, start, end, image,
+                members: nicknames.length > 0 ? nicknames : null,
+                status: 'planning',
+                tag: '規劃中',
+                itinerary: {}
+            };
+
+            createTrip(newTrip).then(() => {
+                closeModal();
+                setTimeout(() => location.href = `detail.html?id=${newId}`, 300);
+            }).catch(err => {
+                alert("建立失敗：" + err.message);
             });
         }
 
