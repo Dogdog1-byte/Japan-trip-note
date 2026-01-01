@@ -117,19 +117,19 @@
                     </button>
                 </div>
 
-                <button onclick="toggleDarkMode()"
-                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                    <div class="flex items-center gap-3">
+                <div onclick="toggleDarkMode()"
+                    class="flex items-center justify-between w-full p-4 bg-surface-light dark:bg-surface-dark rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer">
+                    <div class="flex items-center gap-3 pointer-events-none">
                         <span class="material-symbols-outlined text-primary">dark_mode</span>
                         <span class="font-medium">深色模式</span>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
+                    <label class="relative inline-flex items-center pointer-events-none">
                         <input type="checkbox" id="darkModeToggle" class="sr-only peer">
                         <div
                             class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
                         </div>
                     </label>
-                </button>
+                </div>
             </div>
 
             <!-- Account Actions -->
