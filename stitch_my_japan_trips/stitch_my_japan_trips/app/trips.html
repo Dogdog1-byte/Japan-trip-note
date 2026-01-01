@@ -353,7 +353,7 @@
             // Reset form
             document.getElementById('tripForm').reset();
             document.getElementById('travelerCount').innerText = '1';
-            document.getElementById('membersContainer').innerHTML = '<label class="block text-xs font-bold text-text-sub-light">成員暱稱</label><input type="text" class="member-nickname w-full bg-white dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary shadow-sm" placeholder="成員 1 暱稱">';
+            document.getElementById('membersContainer').innerHTML = '<label class="block text-[10px] font-bold text-text-sub-light opacity-60">成員暱稱</label><input type="text" class="member-nickname w-full bg-white dark:bg-black/20 border-none rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-primary shadow-sm" placeholder="成員 1 暱稱">';
 
             // Set default dates
             const today = new Date().toISOString().split('T')[0];
@@ -414,10 +414,10 @@
 
             const container = document.getElementById('membersContainer');
             const currentNicknames = Array.from(document.querySelectorAll('.member-nickname')).map(input => input.value);
-            let html = '<label class="block text-xs font-bold text-text-sub-light">成員暱稱</label>';
+            let html = '<label class="block text-[10px] font-bold text-text-sub-light opacity-60">成員暱稱</label>';
             for (let i = 0; i < count; i++) {
                 const val = currentNicknames[i] || '';
-                html += `<input type="text" class="member-nickname w-full bg-white dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary shadow-sm" placeholder="成員 ${i + 1} 暱稱" value="${val}">`;
+                html += `<input type="text" class="member-nickname w-full bg-white dark:bg-black/20 border-none rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-primary shadow-sm" placeholder="成員 ${i + 1} 暱稱" value="${val}">`;
             }
             container.innerHTML = html;
         };
