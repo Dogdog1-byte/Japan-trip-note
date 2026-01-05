@@ -379,6 +379,83 @@
             if (timeEl) timeEl.innerText = rateLastUpdated;
         }
 
+        function handleTripChange(id) {
+            currentTripId = id;
+            setSelectedTrip(id);
+
+            if (!id) {
+                stopListening();
+                currentTrip = null;
+                renderExpenses();
+                const addBtn = document.getElementById('addExpenseBtn');
+                if (addBtn) addBtn.disabled = true;
+
+                const summaryCard = document.getElementById('summary-card');
+                if (summaryCard) summaryCard.classList.add('hidden');
+
+                const tripNameEl = document.getElementById('current-trip-name');
+                if (tripNameEl) tripNameEl.innerText = "請選擇行程";
+
+                const settlementSection = document.getElementById('settlement-section');
+                if (settlementSection) settlementSection.classList.add('hidden');
+                return;
+            }
+
+            const addBtn = document.getElementById('addExpenseBtn');
+            if (addBtn) addBtn.disabled = false;
+            startListening(id);
+        }
+
+        function startListening(id) {
+            stopListening();
+            unlistenTrip = listenToTrip(id, (trip) => {
+                if (!trip) return;
+                currentTrip = trip;
+                const tripNameEl = document.getElementById('current-trip-name');
+                if (tripNameEl) tripNameEl.innerText = trip.name;
+                updateParticipantList();
+                renderExpenses();
+            });
+        }
+
+        function stopListening() {
+            if (typeof unlistenTrip === 'function') {
+                unlistenTrip();
+                unlistenTrip = null;
+            }
+        }
+
+        function updateParticipantList() {
+            try {
+                if (!currentTrip) return;
+                const members = currentTrip.members || [getUserName()];
+
+                const container = document.getElementById('split-participants');
+                if (container) {
+                    container.innerHTML = members.map(m => `
+                            <label class="flex items-center gap-1.5 bg-white dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-white/10 cursor-pointer active:scale-95 transition-transform">
+                                <input type="checkbox" name="participant" value="${m}" checked 
+                                    class="rounded text-primary focus:ring-primary size-3.5">
+                                <span class="text-xs font-bold">${m}</span>
+                            </label>
+                        `).join('');
+                }
+
+                const payerSelect = document.getElementById('expPayer');
+                if (payerSelect) {
+                    const oldPayer = payerSelect.value;
+                    payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
+                    if (oldPayer && members.includes(oldPayer)) {
+                        payerSelect.value = oldPayer;
+                    } else {
+                        payerSelect.value = getUserName();
+                    }
+                }
+            } catch (err) {
+                console.error("Update participant list failed", err);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             window.fetchExchangeRate();
             const isConfigured = initApp();
@@ -411,80 +488,12 @@
                 }
             });
 
-            function handleTripChange(id) {
-                currentTripId = id;
-                setSelectedTrip(id);
-
-                if (!id) {
-                    stopListening();
-                    currentTrip = null;
-                    renderExpenses();
-                    document.getElementById('addExpenseBtn').disabled = true;
-                    document.getElementById('summary-card').classList.add('hidden');
-                    document.getElementById('current-trip-name').innerText = "請選擇行程";
-                    document.getElementById('settlement-section').classList.add('hidden');
-                    return;
-                }
-
-                document.getElementById('addExpenseBtn').disabled = false;
-                startListening(id);
-            }
-
-            function startListening(id) {
-                stopListening();
-                // Listen specifically to this trip for real-time updates
-                unlistenTrip = listenToTrip(id, (trip) => {
-                    if (!trip) return;
-                    currentTrip = trip;
-                    document.getElementById('current-trip-name').innerText = trip.name;
-                    updateParticipantList();
-                    renderExpenses();
+            const tripSelect = document.getElementById('tripSelect');
+            if (tripSelect) {
+                tripSelect.addEventListener('change', (e) => {
+                    handleTripChange(e.target.value);
                 });
             }
-
-            function stopListening() {
-                if (typeof unlistenTrip === 'function') {
-                    unlistenTrip();
-                    unlistenTrip = null;
-                }
-            }
-
-            function updateParticipantList() {
-                try {
-                    if (!currentTrip) return;
-                    const members = currentTrip.members || [getUserName()];
-
-                    // Update Split Checkboxes
-                    const container = document.getElementById('split-participants');
-                    if (container) {
-                        container.innerHTML = members.map(m => `
-                            <label class="flex items-center gap-1.5 bg-white dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-white/10 cursor-pointer active:scale-95 transition-transform">
-                                <input type="checkbox" name="participant" value="${m}" checked 
-                                    class="rounded text-primary focus:ring-primary size-3.5">
-                                <span class="text-xs font-bold">${m}</span>
-                            </label>
-                        `).join('');
-                    }
-
-                    // Update Paid By Dropdown
-                    const payerSelect = document.getElementById('expPayer');
-                    if (payerSelect) {
-                        const oldPayer = payerSelect.value;
-                        payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
-                        if (oldPayer && members.includes(oldPayer)) {
-                            payerSelect.value = oldPayer;
-                        } else {
-                            payerSelect.value = getUserName();
-                        }
-                    }
-                } catch (err) {
-                    console.error("Update participant list failed", err);
-                }
-            }
-
-            document.getElementById('tripSelect').addEventListener('change', (e) => {
-                handleTripChange(e.target.value);
-            });
         });
 
         window.openModal = function (expId = null) {
