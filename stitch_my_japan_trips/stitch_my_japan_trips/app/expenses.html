@@ -13,6 +13,7 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
         tailwind.config = {
@@ -136,9 +137,16 @@
                 </div>
 
                 <!-- Pie Chart Container -->
-                <div
-                    class="mb-8 bg-gray-50 dark:bg-black/10 rounded-3xl p-6 flex justify-center items-center h-56 shadow-inner">
-                    <canvas id="expenseChart"></canvas>
+                <div class="mb-8 bg-gray-50 dark:bg-black/10 rounded-3xl p-6 shadow-inner">
+                    <div class="flex flex-col items-center">
+                        <div class="h-44 w-full flex justify-center items-center">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+                        <!-- Custom Legend -->
+                        <div id="chart-legend" class="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2">
+                            <!-- Legend items injected here -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Individual Stats -->
@@ -641,10 +649,22 @@
 
         function updateChart(cats) {
             const ctx = document.getElementById('expenseChart');
+            const legendCon = document.getElementById('chart-legend');
             if (!ctx) return;
 
             const labels = Object.keys(cats);
             const data = Object.values(cats);
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+
+            // Update Legend
+            if (legendCon) {
+                legendCon.innerHTML = labels.map((label, i) => `
+                    <div class="flex items-center gap-1.5">
+                        <div class="size-2.5 rounded-sm" style="background-color: ${colors[i % colors.length]}"></div>
+                        <span class="text-[10px] font-bold opacity-70">${label}</span>
+                    </div>
+                `).join('');
+            }
 
             if (expenseChart) {
                 expenseChart.data.labels = labels;
@@ -653,14 +673,12 @@
             } else {
                 expenseChart = new Chart(ctx, {
                     type: 'doughnut',
+                    plugins: [ChartDataLabels],
                     data: {
                         labels: labels,
                         datasets: [{
                             data: data,
-                            backgroundColor: [
-                                '#FF6384', '#36A2EB', '#FFCE56',
-                                '#4BC0C0', '#9966FF', '#FF9F40'
-                            ],
+                            backgroundColor: colors,
                             borderWidth: 0,
                             hoverOffset: 4
                         }]
@@ -671,6 +689,25 @@
                         plugins: {
                             legend: {
                                 display: false
+                            },
+                            datalabels: {
+                                color: '#fff',
+                                font: {
+                                    weight: 'bold',
+                                    size: 11
+                                },
+                                formatter: (value, ctx) => {
+                                    let sum = 0;
+                                    let dataArr = ctx.chart.data.datasets[0].data;
+                                    dataArr.map(data => {
+                                        sum += data;
+                                    });
+                                    let percentage = (value * 100 / sum).toFixed(0) + "%";
+                                    return percentage;
+                                },
+                                display: (context) => {
+                                    return context.dataset.data[context.dataIndex] > 0;
+                                }
                             },
                             tooltip: {
                                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
