@@ -247,6 +247,15 @@
                         </div>
                     </div>
 
+                    <div
+                        class="flex items-center gap-2 bg-gray-50 dark:bg-black/20 rounded-xl px-3 py-2 cursor-pointer hover:bg-primary/5 transition-colors">
+                        <input type="checkbox" id="expTaxRefund" class="rounded text-primary focus:ring-primary size-4">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold">這筆支出包含日本退稅 (10%)</span>
+                            <span class="text-[9px] opacity-50">開啟後將於結算時自動扣除預計退稅額</span>
+                        </div>
+                    </div>
+
                     <div>
                         <label
                             class="block text-[9px] font-black mb-0.5 ml-0.5 text-text-sub-light opacity-60 uppercase">分帳成員</label>
@@ -523,6 +532,7 @@
                     category: document.getElementById('expCategory').value,
                     title: document.getElementById('expTitle').value,
                     method: document.getElementById('expMethod').value,
+                    isTaxRefund: document.getElementById('expTaxRefund').checked,
                     desc: document.getElementById('expDesc').value,
                     url: document.getElementById('expUrl').value,
                     payer: payer,
@@ -580,16 +590,29 @@
 
             let totalJpy = 0;
             let totalTwd = 0;
+            let totalRefund = 0;
             const cats = {};
 
             container.innerHTML = expenses.map(exp => {
+                const refund = exp.isTaxRefund ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
                 totalJpy += exp.amount;
                 totalTwd += (exp.amountTwd || 0);
-                cats[exp.category] = (cats[exp.category] || 0) + exp.amount;
+                totalRefund += refund;
+
+                // For categories, use net amount to reflect real cost
+                const netAmount = exp.amount - refund;
+                cats[exp.category] = (cats[exp.category] || 0) + netAmount;
 
                 const splitCount = exp.participants ? exp.participants.length : 1;
-                const perPerson = Math.round(exp.amount / splitCount);
-                const splitText = exp.participants ? `💸 ${exp.payer} 墊 / ${exp.participants.length}人分 (每人 ¥${perPerson})` : exp.payer;
+                const perPerson = Math.round(netAmount / splitCount);
+                const splitText = exp.participants ? `💸 ${exp.payer} 墊 / ${exp.participants.length}人分 (每人 ¥${perPerson}${exp.isTaxRefund ? ' 扣退稅' : ''})` : exp.payer;
+
+                const refundTag = exp.isTaxRefund ? `
+                    <div class="mt-1 flex items-center gap-1 text-[9px] font-bold text-green-600 dark:text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
+                        <span class="material-symbols-outlined text-[10px]">savings</span>
+                        <span>預計退稅 ¥${refund.toLocaleString()}</span>
+                    </div>
+                ` : '';
 
                 return `
                     <div class="swipe-container mb-4">
@@ -608,6 +631,7 @@
                                     <div class="min-w-0">
                                         <h4 class="font-bold text-base truncate">${exp.title}</h4>
                                         <p class="text-[10px] text-text-sub-light truncate">${exp.method || '現金'} · ${splitText}</p>
+                                        ${refundTag}
                                     </div>
                                 </div>
                                 <div class="text-right flex flex-col items-end">
@@ -634,7 +658,23 @@
                 `;
             }).join('');
 
-            totalDisplay.innerHTML = `<div>¥ ${totalJpy.toLocaleString()}</div><div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>`;
+            if (totalRefund > 0) {
+                totalDisplay.innerHTML = `
+                    <div class="flex flex-col">
+                        <div class="flex items-baseline gap-2">
+                            <span>¥ ${(totalJpy - totalRefund).toLocaleString()}</span>
+                            <span class="text-xs opacity-50 font-normal">原價 ¥${totalJpy.toLocaleString()}</span>
+                        </div>
+                        <div class="text-[10px] bg-white/20 self-start px-2 py-0.5 rounded-full mt-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[12px]">account_balance_wallet</span>
+                            預計扣除退稅 ¥${totalRefund.toLocaleString()}
+                        </div>
+                        <div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>
+                    </div>
+                `;
+            } else {
+                totalDisplay.innerHTML = `<div>¥ ${totalJpy.toLocaleString()}</div><div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>`;
+            }
 
             catSummary.innerHTML = Object.entries(cats).map(([cat, amt]) => `
                 <div class="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1 shrink-0">
@@ -654,7 +694,7 @@
 
             const labels = Object.keys(cats);
             const data = Object.values(cats);
-            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#8BC34A', '#E91E63'];
 
             // Update Legend
             if (legendCon) {
@@ -724,7 +764,7 @@
                                 }
                             }
                         },
-                        cutout: '75%', // Increased cutout for more modern look
+                        cutout: '75%',
                         animation: {
                             animateScale: true,
                             animateRotate: true
@@ -752,15 +792,17 @@
             const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
 
             expensesArray.forEach(exp => {
-                const amount = exp.amount;
+                const refund = exp.isTaxRefund ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
+                const netAmount = exp.amount - refund;
+                const amount = exp.amount; // Still use full amount for "Paid" tracking
                 const payer = exp.payer;
                 const participants = exp.participants || [payer];
 
-                // Total Paid
+                // Total Paid (Actual out-of-pocket at the time)
                 totalPaid[payer] = (totalPaid[payer] || 0) + amount;
 
-                // Individual Share
-                const share = amount / participants.length;
+                // Individual Share (Calculated from net amount)
+                const share = netAmount / participants.length;
                 participants.forEach(p => {
                     totalConsumed[p] = (totalConsumed[p] || 0) + share;
                 });
@@ -803,7 +845,7 @@
             const statsList = document.getElementById('member-stats-list');
             statsList.innerHTML = members.map(m => `
                 <div class="bg-surface-light dark:bg-white/5 border border-gray-100 dark:border-white/10 p-3 rounded-2xl min-w-[140px] shrink-0">
-                    <div class="text-xs font-black text-text-sub-light mb-2 truncate">${m}</div>
+                    <div class="text-[13px] font-black text-text-sub-light mb-2 truncate">${m}</div>
                     <div class="space-y-1">
                         <div class="flex justify-between items-end gap-2">
                             <span class="text-[9px] opacity-60">墊付</span>
