@@ -336,6 +336,7 @@
         let currentTrip = null;
         let unlistenTrip = null;
         let expenseChart = null;
+        let editingId = null; // Track which expense is being edited
 
         // Auto Dark Mode
         if (localStorage.getItem('darkMode') === 'true') {
@@ -471,17 +472,57 @@
             });
         });
 
-        window.openModal = function () {
+        window.openModal = function (expId = null) {
             const modalOverlay = document.getElementById('modal-overlay');
             const modalContent = document.getElementById('modal-content');
+            const modalTitle = modalContent.querySelector('h3');
+            const form = document.getElementById('expenseForm');
+
+            form.reset();
+            editingId = expId;
+            updateParticipantList(); // Re-render members
+
+            if (editingId && currentTrip && currentTrip.expenses) {
+                const exp = Array.isArray(currentTrip.expenses)
+                    ? currentTrip.expenses.find(e => e.id == editingId)
+                    : currentTrip.expenses[editingId];
+
+                if (exp) {
+                    modalTitle.innerText = "編輯 / 詳細資訊";
+                    document.getElementById('expAmount').value = exp.amount;
+                    document.getElementById('expCategory').value = exp.category;
+                    document.getElementById('expTitle').value = exp.title;
+                    document.getElementById('expPayer').value = exp.payer;
+                    document.getElementById('expMethod').value = exp.method || '現金';
+                    document.getElementById('expTaxRefund').checked = !!exp.isTaxRefund;
+                    document.getElementById('expDesc').value = exp.desc || '';
+                    document.getElementById('expUrl').value = exp.url || '';
+
+                    // Update textarea height
+                    const descArea = document.getElementById('expDesc');
+                    descArea.style.height = '';
+                    descArea.style.height = descArea.scrollHeight + 'px';
+
+                    // Set participants
+                    if (exp.participants) {
+                        setTimeout(() => { // Wait for updateParticipantList injection
+                            exp.participants.forEach(p => {
+                                const chk = document.querySelector(`input[name="participant"][value="${p}"]`);
+                                if (chk) chk.checked = true;
+                            });
+                        }, 50);
+                    }
+                }
+            } else {
+                modalTitle.innerText = "新增支出";
+            }
+
             modalOverlay.classList.remove('hidden');
-            void modalOverlay.offsetWidth;
-            modalOverlay.classList.remove('opacity-0');
-            modalContent.classList.remove('translate-y-full');
-            modalContent.style.transform = ''; // Reset swipe transform
-            modalContent.style.transition = ''; // Reset swipe transition
-            document.getElementById('expenseForm').reset();
-            updateParticipantList(); // Ensure fresh list
+            setTimeout(() => {
+                modalOverlay.classList.remove('opacity-0');
+                modalContent.classList.remove('translate-y-full');
+            }, 10);
+            document.body.style.overflow = 'hidden';
         }
 
         window.closeModal = function () {
@@ -526,7 +567,7 @@
                 }
 
                 const expense = {
-                    id: Date.now(),
+                    id: editingId || Date.now(),
                     amount: amountJpy,
                     amountTwd: Math.round(amountJpy * (exchangeRate || 0.22)),
                     category: document.getElementById('expCategory').value,
@@ -537,7 +578,8 @@
                     url: document.getElementById('expUrl').value,
                     payer: payer,
                     participants: participants,
-                    time: new Date().toISOString()
+                    time: editingId ? (currentTrip.expenses[editingId]?.time || new Date().toISOString()) : new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
                 };
 
                 const success = await saveExpense(currentTripId, expense);
@@ -650,7 +692,8 @@
                             <div class="swipe-action" onclick="deleteExpense(${exp.id})">
                                 <span class="material-symbols-outlined">delete</span>
                             </div>
-                            <div class="swipe-item bg-white dark:bg-surface-dark p-3 shadow-sm border border-transparent hover:border-primary/20 transition group relative h-full flex items-start gap-2.5"
+                            <div class="swipe-item bg-white dark:bg-surface-dark p-3 shadow-sm border border-transparent hover:border-primary/20 transition group relative h-full flex items-start gap-2.5 cursor-pointer active:scale-[0.98]"
+                                onclick="openModal(${exp.id})"
                                 ontouchstart="handleSwipeStart(event)" 
                                 ontouchmove="handleSwipeMove(event)" 
                                 ontouchend="handleSwipeEnd(event, ${exp.id})">
@@ -694,11 +737,11 @@
                         
                         <!-- Independent Tax Refund Card -->
                         <div class="w-14 shrink-0 bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition flex flex-col items-center justify-center">
-                            <label class="flex flex-col items-center gap-1 cursor-pointer group/tax w-full h-full justify-center">
+                            <label class="flex flex-col items-center gap-1 cursor-pointer group/tax w-full h-full justify-center" onclick="event.stopPropagation()">
                                 <span class="text-[8px] font-black opacity-30 group-hover/tax:opacity-60 transition-opacity uppercase tracking-widest scale-90">退稅</span>
                                 <input type="checkbox" 
                                     ${exp.isTaxRefund ? 'checked' : ''} 
-                                    onclick="toggleTaxRefund(${exp.id}, this.checked)"
+                                    onclick="event.stopPropagation(); toggleTaxRefund(${exp.id}, this.checked)"
                                     class="rounded-md border-gray-300 dark:border-white/10 text-primary focus:ring-primary size-5">
                             </label>
                         </div>
