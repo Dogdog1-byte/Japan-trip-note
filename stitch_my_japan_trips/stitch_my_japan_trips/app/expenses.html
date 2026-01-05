@@ -12,6 +12,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
         tailwind.config = {
@@ -99,6 +100,12 @@
                 <div id="category-summary" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                     <!-- Categories -->
                 </div>
+
+                <!-- Pie Chart Container -->
+                <div class="mt-6 bg-white/10 rounded-2xl p-4 flex justify-center items-center h-48">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+
                 <div id="exchange-rate-info"
                     class="mt-4 pt-4 border-t border-white/20 text-[10px] font-bold opacity-80 flex justify-between items-center">
                     <div class="flex items-center gap-1">
@@ -310,6 +317,7 @@
         let currentTripId = null;
         let currentTrip = null;
         let unlistenTrip = null;
+        let expenseChart = null;
 
         // Auto Dark Mode
         if (localStorage.getItem('darkMode') === 'true') {
@@ -516,12 +524,10 @@
                 const success = await saveExpense(currentTripId, expense);
                 if (success) {
                     window.closeModal();
-                } else {
-                    alert("儲存失敗，請檢查網路連線");
                 }
             } catch (err) {
                 console.error("Save expense failed", err);
-                alert("發生錯誤：" + err.message);
+                alert("儲存失敗：" + err.message);
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerText = "儲存支出";
@@ -628,7 +634,57 @@
                 </div>
             `).join('');
 
+            updateChart(cats);
             calculateSettlement();
+        }
+
+        function updateChart(cats) {
+            const ctx = document.getElementById('expenseChart');
+            if (!ctx) return;
+
+            const labels = Object.keys(cats);
+            const data = Object.values(cats);
+
+            if (expenseChart) {
+                expenseChart.data.labels = labels;
+                expenseChart.data.datasets[0].data = data;
+                expenseChart.update();
+            } else {
+                expenseChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#FF6384', '#36A2EB', '#FFCE56',
+                                '#4BC0C0', '#9966FF', '#FF9F40'
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        return `${label}: ¥${value.toLocaleString()}`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '70%' // Corrected key for doughnut hole size
+                    }
+                });
+            }
         }
 
         function calculateSettlement() {
