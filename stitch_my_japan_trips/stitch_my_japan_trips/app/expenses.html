@@ -172,6 +172,13 @@
         </main>
 
         <!-- FAB -->
+        <style>
+            #modal-content .overflow-y-auto {
+                overscroll-behavior-y: contain;
+                -webkit-overflow-scrolling: touch;
+            }
+        </style>
+
         <div class="fixed bottom-24 right-6 z-40 md:right-1/2 md:translate-x-[200px]">
             <button id="addExpenseBtn" onclick="openModal()" disabled
                 class="flex size-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg shadow-primary/30 transition hover:scale-105 active:scale-95 disabled:grayscale disabled:opacity-50">
@@ -443,27 +450,35 @@
             }
 
             function updateParticipantList() {
-                if (!currentTrip) return;
-                const members = currentTrip.members || [getUserName()];
+                try {
+                    if (!currentTrip) return;
+                    const members = currentTrip.members || [getUserName()];
 
-                // Update Split Checkboxes
-                const container = document.getElementById('split-participants');
-                container.innerHTML = members.map(m => `
-                    <label class="flex items-center gap-1.5 bg-white dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-white/10 cursor-pointer active:scale-95 transition-transform">
-                        <input type="checkbox" name="participant" value="${m}" checked 
-                            class="rounded text-primary focus:ring-primary size-3.5">
-                        <span class="text-xs font-bold">${m}</span>
-                    </label>
-                `).join('');
+                    // Update Split Checkboxes
+                    const container = document.getElementById('split-participants');
+                    if (container) {
+                        container.innerHTML = members.map(m => `
+                            <label class="flex items-center gap-1.5 bg-white dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-white/10 cursor-pointer active:scale-95 transition-transform">
+                                <input type="checkbox" name="participant" value="${m}" checked 
+                                    class="rounded text-primary focus:ring-primary size-3.5">
+                                <span class="text-xs font-bold">${m}</span>
+                            </label>
+                        `).join('');
+                    }
 
-                // Update Paid By Dropdown
-                const payerSelect = document.getElementById('expPayer');
-                const oldPayer = payerSelect.value;
-                payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
-                if (oldPayer && members.includes(oldPayer)) {
-                    payerSelect.value = oldPayer;
-                } else {
-                    payerSelect.value = getUserName();
+                    // Update Paid By Dropdown
+                    const payerSelect = document.getElementById('expPayer');
+                    if (payerSelect) {
+                        const oldPayer = payerSelect.value;
+                        payerSelect.innerHTML = members.map(m => `<option value="${m}">${m}</option>`).join('');
+                        if (oldPayer && members.includes(oldPayer)) {
+                            payerSelect.value = oldPayer;
+                        } else {
+                            payerSelect.value = getUserName();
+                        }
+                    }
+                } catch (err) {
+                    console.error("Update participant list failed", err);
                 }
             }
 
@@ -473,57 +488,69 @@
         });
 
         window.openModal = function (expId = null) {
-            console.log("openModal called with ID:", expId);
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modalContent = document.getElementById('modal-content');
-            const modalTitle = modalContent.querySelector('h3');
-            const form = document.getElementById('expenseForm');
+            try {
+                const modalOverlay = document.getElementById('modal-overlay');
+                const modalContent = document.getElementById('modal-content');
+                if (!modalOverlay || !modalContent) return;
+                const modalTitle = modalContent.querySelector('h3');
+                const form = document.getElementById('expenseForm');
+                if (!form) return;
 
-            form.reset();
-            editingId = expId;
-            updateParticipantList(); // Re-render members
+                form.reset();
+                editingId = expId;
+                updateParticipantList(); // Re-render members
 
-            if (editingId && currentTrip && currentTrip.expenses) {
-                const expensesArray = Array.isArray(currentTrip.expenses) ? currentTrip.expenses : Object.values(currentTrip.expenses);
-                const exp = expensesArray.find(e => e.id == editingId);
+                if (editingId && currentTrip && currentTrip.expenses) {
+                    const expensesArray = Array.isArray(currentTrip.expenses) ? currentTrip.expenses : Object.values(currentTrip.expenses);
+                    const exp = expensesArray.find(e => e.id == editingId);
 
-                if (exp) {
-                    console.log("Editing expense found:", exp);
-                    modalTitle.innerText = "編輯 / 詳細資訊";
-                    document.getElementById('expAmount').value = exp.amount;
-                    document.getElementById('expCategory').value = exp.category;
-                    document.getElementById('expTitle').value = exp.title;
-                    document.getElementById('expPayer').value = exp.payer;
-                    document.getElementById('expMethod').value = exp.method || '現金';
-                    document.getElementById('expTaxRefund').checked = !!exp.isTaxRefund;
-                    document.getElementById('expDesc').value = exp.desc || '';
-                    document.getElementById('expUrl').value = exp.url || '';
+                    if (exp) {
+                        if (modalTitle) modalTitle.innerText = "編輯 / 詳細資訊";
+                        document.getElementById('expAmount').value = exp.amount || 0;
+                        document.getElementById('expCategory').value = exp.category || '其他';
+                        document.getElementById('expTitle').value = exp.title || '';
+                        document.getElementById('expPayer').value = exp.payer || getUserName();
+                        document.getElementById('expMethod').value = exp.method || '現金';
+                        document.getElementById('expTaxRefund').checked = !!exp.isTaxRefund;
+                        document.getElementById('expDesc').value = exp.desc || '';
+                        document.getElementById('expUrl').value = exp.url || '';
 
-                    // Update textarea height
-                    const descArea = document.getElementById('expDesc');
-                    descArea.style.height = '';
-                    descArea.style.height = descArea.scrollHeight + 'px';
+                        // Update textarea height
+                        const descArea = document.getElementById('expDesc');
+                        descArea.style.height = '';
+                        descArea.style.height = descArea.scrollHeight + 'px';
 
-                    // Set participants
-                    if (exp.participants) {
-                        setTimeout(() => { // Wait for updateParticipantList injection
-                            exp.participants.forEach(p => {
-                                const chk = document.querySelector(`input[name="participant"][value="${p}"]`);
-                                if (chk) chk.checked = true;
-                            });
-                        }, 50);
+                        // Set participants
+                        if (exp.participants) {
+                            setTimeout(() => {
+                                // Reset all to unchecked first
+                                document.querySelectorAll('input[name="participant"]').forEach(c => c.checked = false);
+                                exp.participants.forEach(p => {
+                                    const chk = document.querySelector(`input[name="participant"][value="${p}"]`);
+                                    if (chk) chk.checked = true;
+                                });
+                            }, 50);
+                        }
                     }
+                } else {
+                    if (modalTitle) modalTitle.innerText = "新增支出";
+                    // Default to all selected in Add mode
+                    setTimeout(() => {
+                        const allChks = document.querySelectorAll('input[name="participant"]');
+                        allChks.forEach(c => c.checked = true);
+                    }, 50);
                 }
-            } else {
-                modalTitle.innerText = "新增支出";
-            }
 
-            modalOverlay.classList.remove('hidden');
-            // Force reflow
-            modalOverlay.offsetHeight;
-            modalOverlay.classList.remove('opacity-0');
-            modalContent.classList.remove('translate-y-full');
-            document.body.style.overflow = 'hidden';
+                modalOverlay.classList.remove('hidden');
+                // Force reflow
+                modalOverlay.offsetHeight;
+                modalOverlay.classList.remove('opacity-0');
+                modalContent.classList.remove('translate-y-full');
+                document.body.style.overflow = 'hidden';
+            } catch (err) {
+                console.error("Open modal failed:", err);
+                alert("開啟視窗失敗");
+            }
         }
 
         window.closeModal = function () {
@@ -566,6 +593,9 @@
                     return;
                 }
 
+                const expensesArray = currentTrip && currentTrip.expenses ? (Array.isArray(currentTrip.expenses) ? currentTrip.expenses : Object.values(currentTrip.expenses)) : [];
+                const existingExp = editingId ? expensesArray.find(e => e.id == editingId) : null;
+
                 const expense = {
                     id: editingId || Date.now(),
                     amount: amountJpy,
@@ -578,7 +608,7 @@
                     url: document.getElementById('expUrl').value,
                     payer: payer,
                     participants: participants,
-                    time: editingId ? (currentTrip.expenses[editingId]?.time || new Date().toISOString()) : new Date().toISOString(),
+                    time: existingExp ? existingExp.time : new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 };
 
@@ -617,76 +647,79 @@
         }
 
         function renderExpenses() {
-            const container = document.getElementById('expenses-container');
-            const totalDisplay = document.getElementById('total-amount');
-            const catSummary = document.getElementById('category-summary');
-            const summaryCard = document.getElementById('summary-card');
-            const empty = document.getElementById('empty-expenses');
+            try {
+                const container = document.getElementById('expenses-container');
+                const totalDisplay = document.getElementById('total-amount');
+                const catSummary = document.getElementById('category-summary');
+                const summaryCard = document.getElementById('summary-card');
+                const empty = document.getElementById('empty-expenses');
 
-            if (!currentTrip) {
-                empty.innerHTML = `
+                if (!container || !totalDisplay || !catSummary || !summaryCard || !empty) return;
+
+                if (!currentTrip) {
+                    empty.innerHTML = `
                     <div class="flex flex-col items-center">
                         <span class="material-symbols-outlined text-6xl mb-4 opacity-20">search</span>
                         <p class="font-bold text-text-sub-light">請從上方選單選擇行程</p>
                         <p class="text-[10px] text-text-sub-light opacity-50">選取後即可查看支出與結算</p>
                     </div>
                 `;
-                empty.classList.remove('hidden');
-                container.innerHTML = '';
-                summaryCard.classList.add('hidden');
-                document.getElementById('settlement-section').classList.add('hidden');
-                return;
-            }
+                    empty.classList.remove('hidden');
+                    container.innerHTML = '';
+                    summaryCard.classList.add('hidden');
+                    document.getElementById('settlement-section').classList.add('hidden');
+                    return;
+                }
 
-            const rawExpenses = currentTrip.expenses || [];
-            const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
+                const rawExpenses = currentTrip.expenses || [];
+                const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
 
-            if (expensesArray.length === 0) {
-                empty.innerHTML = `
+                if (expensesArray.length === 0) {
+                    empty.innerHTML = `
                     <div class="flex flex-col items-center">
                         <span class="material-symbols-outlined text-6xl mb-4 opacity-20">receipt_long</span>
                         <p class="font-bold text-text-sub-light">尚未有任何支出紀錄</p>
                     </div>
                 `;
-                empty.classList.remove('hidden');
-                container.innerHTML = '';
-                summaryCard.classList.add('hidden');
-                document.getElementById('settlement-section').classList.add('hidden');
-                return;
-            }
+                    empty.classList.remove('hidden');
+                    container.innerHTML = '';
+                    summaryCard.classList.add('hidden');
+                    document.getElementById('settlement-section').classList.add('hidden');
+                    return;
+                }
 
-            empty.classList.add('hidden');
-            summaryCard.classList.remove('hidden');
+                empty.classList.add('hidden');
+                summaryCard.classList.remove('hidden');
 
-            const expenses = [...expensesArray].sort((a, b) => b.id - a.id);
+                const expenses = [...expensesArray].sort((a, b) => b.id - a.id);
 
-            let totalJpy = 0;
-            let totalTwd = 0;
-            let totalRefund = 0;
-            const cats = {};
+                let totalJpy = 0;
+                let totalTwd = 0;
+                let totalRefund = 0;
+                const cats = {};
 
-            container.innerHTML = expenses.map(exp => {
-                const refund = exp.isTaxRefund ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
-                totalJpy += exp.amount;
-                totalTwd += (exp.amountTwd || 0);
-                totalRefund += refund;
+                container.innerHTML = expenses.map(exp => {
+                    const refund = exp.isTaxRefund ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
+                    totalJpy += exp.amount;
+                    totalTwd += (exp.amountTwd || 0);
+                    totalRefund += refund;
 
-                // For categories, use net amount to reflect real cost
-                const netAmount = exp.amount - refund;
-                cats[exp.category] = (cats[exp.category] || 0) + netAmount;
+                    // For categories, use net amount to reflect real cost
+                    const netAmount = exp.amount - refund;
+                    cats[exp.category] = (cats[exp.category] || 0) + netAmount;
 
-                const splitCount = exp.participants ? exp.participants.length : 1;
-                const perPerson = Math.round(netAmount / splitCount);
-                const splitText = exp.participants ? `💸 ${exp.payer} 墊 / ${exp.participants.length}人分 (每人 ¥${perPerson}${exp.isTaxRefund ? ' 扣退稅' : ''})` : exp.payer;
+                    const splitCount = exp.participants ? exp.participants.length : 1;
+                    const perPerson = Math.round(netAmount / splitCount);
+                    const splitText = exp.participants ? `💸 ${exp.payer} 墊 / ${exp.participants.length}人分 (每人 ¥${perPerson}${exp.isTaxRefund ? ' 扣退稅' : ''})` : exp.payer;
 
-                const refundTag = exp.isTaxRefund ? `
+                    const refundTag = exp.isTaxRefund ? `
                     <div class="mt-1 flex items-center gap-1 text-[9px] font-bold text-green-600 dark:text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
                         <span class="material-symbols-outlined text-[10px]">savings</span>
                         <span>預計退稅 ¥${refund.toLocaleString()}</span>
                     </div>
                 ` : '';
 
-                return `
+                    return `
                     <div class="flex items-stretch gap-2 mb-4">
                         <div class="swipe-container flex-1 min-w-0">
                             <div class="swipe-action" onclick="deleteExpense(${exp.id})">
@@ -729,7 +762,7 @@
                                     ` : ''}
                                 </div>
 
-                                <button onclick="deleteExpense(${exp.id})" class="absolute -top-1 -right-1 size-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg z-10 md:flex hidden">
+                                <button onclick="event.stopPropagation(); deleteExpense(${exp.id})" class="absolute -top-1 -right-1 size-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg z-10 md:flex hidden">
                                     <span class="material-symbols-outlined text-xs">close</span>
                                 </button>
                             </div>
@@ -747,10 +780,10 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+                }).join('');
 
-            if (totalRefund > 0) {
-                totalDisplay.innerHTML = `
+                if (totalRefund > 0) {
+                    totalDisplay.innerHTML = `
                     <div class="flex flex-col">
                         <div class="flex items-baseline gap-2">
                             <span>¥ ${(totalJpy - totalRefund).toLocaleString()}</span>
@@ -763,19 +796,22 @@
                         <div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>
                     </div>
                 `;
-            } else {
-                totalDisplay.innerHTML = `<div>¥ ${totalJpy.toLocaleString()}</div><div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>`;
-            }
+                } else {
+                    totalDisplay.innerHTML = `<div>¥ ${totalJpy.toLocaleString()}</div><div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>`;
+                }
 
-            catSummary.innerHTML = Object.entries(cats).map(([cat, amt]) => `
+                catSummary.innerHTML = Object.entries(cats).map(([cat, amt]) => `
                 <div class="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1 shrink-0">
                     <span class="text-[10px] font-bold">${cat}</span>
                     <span class="text-[10px] font-black">¥${amt.toLocaleString()}</span>
                 </div>
             `).join('');
 
-            updateChart(cats);
-            calculateSettlement();
+                updateChart(cats);
+                calculateSettlement();
+            } catch (err) {
+                console.error("Render expenses failed:", err);
+            }
         }
 
         function updateChart(cats) {
@@ -866,107 +902,113 @@
         }
 
         function calculateSettlement() {
-            if (!currentTrip || !currentTrip.expenses) return;
+            try {
+                if (!currentTrip) return;
 
-            const balances = {};
-            const totalPaid = {};
-            const totalConsumed = {};
-            const members = currentTrip.members || [getUserName()];
+                const balances = {};
+                const totalPaid = {};
+                const totalConsumed = {};
+                const members = currentTrip.members || [getUserName()];
 
-            members.forEach(m => {
-                balances[m] = 0;
-                totalPaid[m] = 0;
-                totalConsumed[m] = 0;
-            });
-
-            const rawExpenses = currentTrip.expenses || [];
-            const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
-
-            expensesArray.forEach(exp => {
-                const refund = exp.isTaxRefund ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
-                const netAmount = exp.amount - refund;
-                const amount = exp.amount; // Still use full amount for "Paid" tracking
-                const payer = exp.payer;
-                const participants = exp.participants || [payer];
-
-                // Total Paid (Actual out-of-pocket at the time)
-                totalPaid[payer] = (totalPaid[payer] || 0) + amount;
-
-                // Individual Share (Calculated from net amount)
-                const share = netAmount / participants.length;
-                participants.forEach(p => {
-                    totalConsumed[p] = (totalConsumed[p] || 0) + share;
+                members.forEach(m => {
+                    balances[m] = 0;
+                    totalPaid[m] = 0;
+                    totalConsumed[m] = 0;
                 });
-            });
 
-            // Calculate Balances
-            members.forEach(m => {
-                balances[m] = totalPaid[m] - totalConsumed[m];
-            });
+                const rawExpenses = currentTrip.expenses || {};
+                const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
 
-            const settlementSection = document.getElementById('settlement-section');
-            const settlementList = document.getElementById('settlement-list');
+                expensesArray.forEach(exp => {
+                    if (!exp) return;
+                    const refund = exp.isTaxRefund ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
+                    const netAmount = exp.amount - refund;
+                    const amount = exp.amount;
+                    const payer = exp.payer;
+                    const participants = exp.participants || [payer];
 
-            const creditors = [];
-            const debtors = [];
+                    if (payer && totalPaid.hasOwnProperty(payer)) {
+                        totalPaid[payer] += amount;
+                    }
 
-            for (const [name, balance] of Object.entries(balances)) {
-                if (balance > 1) creditors.push({ name, balance });
-                else if (balance < -1) debtors.push({ name, balance: -balance });
-            }
+                    const share = netAmount / participants.length;
+                    participants.forEach(p => {
+                        if (totalConsumed.hasOwnProperty(p)) {
+                            totalConsumed[p] += share;
+                        }
+                    });
+                });
 
-            // Simple debt settlement algorithm
-            const transactions = [];
-            creditors.sort((a, b) => b.balance - a.balance);
-            debtors.sort((a, b) => b.balance - a.balance);
+                members.forEach(m => {
+                    balances[m] = totalPaid[m] - totalConsumed[m];
+                });
 
-            let i = 0, j = 0;
-            while (i < creditors.length && j < debtors.length) {
-                const amount = Math.min(creditors[i].balance, debtors[j].balance);
-                transactions.push({ from: debtors[j].name, to: creditors[i].name, amount: Math.round(amount) });
+                const settlementSection = document.getElementById('settlement-section');
+                const settlementList = document.getElementById('settlement-list');
+                const statsList = document.getElementById('member-stats-list');
 
-                creditors[i].balance -= amount;
-                debtors[j].balance -= amount;
+                if (!settlementSection || !settlementList || !statsList) return;
 
-                if (creditors[i].balance < 1) i++;
-                if (debtors[j].balance < 1) j++;
-            }
+                const creditors = [];
+                const debtors = [];
 
-            // Render Member Stats
-            const statsList = document.getElementById('member-stats-list');
-            statsList.innerHTML = members.map(m => `
-                <div class="bg-surface-light dark:bg-white/5 border border-gray-100 dark:border-white/10 p-3 rounded-2xl min-w-[140px] shrink-0">
-                    <div class="text-[13px] font-black text-text-sub-light mb-2 truncate">${m}</div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between items-end gap-2">
-                            <span class="text-[9px] opacity-60">墊付</span>
-                            <span class="text-xs font-bold font-mono">¥${Math.round(totalPaid[m]).toLocaleString()}</span>
-                        </div>
-                        <div class="flex justify-between items-end gap-2">
-                            <span class="text-[9px] opacity-60">消費</span>
-                            <span class="text-xs font-bold font-mono text-primary">¥${Math.round(totalConsumed[m]).toLocaleString()}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+                for (const [name, balance] of Object.entries(balances)) {
+                    if (balance > 1) creditors.push({ name, balance });
+                    else if (balance < -1) debtors.push({ name, balance: -balance });
+                }
 
-            if (transactions.length > 0 || members.some(m => totalPaid[m] > 0)) {
-                settlementSection.classList.remove('hidden');
-                settlementList.innerHTML = transactions.map(t => `
-                    <div class="bg-primary/5 border border-primary/10 p-3 rounded-xl flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-sm">${t.from}</span>
-                            <span class="material-symbols-outlined text-xs text-text-sub-light">arrow_forward</span>
-                            <span class="font-bold text-sm">${t.to}</span>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-black text-primary text-base">¥ ${t.amount.toLocaleString()}</p>
-                            <p class="text-[10px] text-text-sub-light">≈ NT$ ${Math.round(t.amount * exchangeRate).toLocaleString()}</p>
+                const transactions = [];
+                creditors.sort((a, b) => b.balance - a.balance);
+                debtors.sort((a, b) => b.balance - a.balance);
+
+                let i = 0, j = 0;
+                while (i < creditors.length && j < debtors.length) {
+                    const amount = Math.min(creditors[i].balance, debtors[j].balance);
+                    transactions.push({ from: debtors[j].name, to: creditors[i].name, amount: Math.round(amount) });
+
+                    creditors[i].balance -= amount;
+                    debtors[j].balance -= amount;
+
+                    if (creditors[i].balance < 1) i++;
+                    if (debtors[j].balance < 1) j++;
+                }
+
+                statsList.innerHTML = members.map(m => `
+                    <div class="bg-surface-light dark:bg-white/5 border border-gray-100 dark:border-white/10 p-3 rounded-2xl min-w-[140px] shrink-0">
+                        <div class="text-[13px] font-black text-text-sub-light mb-2 truncate">${m}</div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-end gap-2">
+                                <span class="text-[9px] opacity-60">墊付</span>
+                                <span class="text-xs font-bold font-mono">¥${Math.round(totalPaid[m] || 0).toLocaleString()}</span>
+                            </div>
+                            <div class="flex justify-between items-end gap-2">
+                                <span class="text-[9px] opacity-60">消費</span>
+                                <span class="text-xs font-bold font-mono text-primary">¥${Math.round(totalConsumed[m] || 0).toLocaleString()}</span>
+                            </div>
                         </div>
                     </div>
                 `).join('');
-            } else {
-                settlementSection.classList.add('hidden');
+
+                if (transactions.length > 0 || members.some(m => (totalPaid[m] || 0) > 0)) {
+                    settlementSection.classList.remove('hidden');
+                    settlementList.innerHTML = transactions.map(t => `
+                        <div class="bg-primary/5 border border-primary/10 p-3 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-text-main">${t.from}</span>
+                                <span class="material-symbols-outlined text-xs text-text-sub-light opacity-50">arrow_forward</span>
+                                <span class="font-bold text-sm text-text-main">${t.to}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-black text-primary text-base">¥ ${t.amount.toLocaleString()}</p>
+                                <p class="text-[10px] text-text-sub-light opacity-70">≈ NT$ ${Math.round(t.amount * (exchangeRate || 0.22)).toLocaleString()}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    settlementSection.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("Settlement calculation failed", err);
             }
         }
 
