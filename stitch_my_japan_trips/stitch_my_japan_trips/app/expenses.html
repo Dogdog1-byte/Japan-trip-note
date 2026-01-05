@@ -101,11 +101,6 @@
                     <!-- Categories -->
                 </div>
 
-                <!-- Pie Chart Container -->
-                <div class="mt-6 bg-white/10 rounded-2xl p-4 flex justify-center items-center h-48">
-                    <canvas id="expenseChart"></canvas>
-                </div>
-
                 <div id="exchange-rate-info"
                     class="mt-4 pt-4 border-t border-white/20 text-[10px] font-bold opacity-80 flex justify-between items-center">
                     <div class="flex items-center gap-1">
@@ -138,6 +133,12 @@
                 <div class="flex items-center gap-2 mb-4">
                     <span class="material-symbols-outlined text-primary">analytics</span>
                     <h3 class="text-lg font-bold">支出統計與結算</h3>
+                </div>
+
+                <!-- Pie Chart Container -->
+                <div
+                    class="mb-8 bg-gray-50 dark:bg-black/10 rounded-3xl p-6 flex justify-center items-center h-56 shadow-inner">
+                    <canvas id="expenseChart"></canvas>
                 </div>
 
                 <!-- Individual Stats -->
@@ -672,16 +673,25 @@
                                 display: false
                             },
                             tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 13 },
+                                padding: 12,
+                                cornerRadius: 10,
                                 callbacks: {
                                     label: function (context) {
                                         const label = context.label || '';
                                         const value = context.raw || 0;
-                                        return `${label}: ¥${value.toLocaleString()}`;
+                                        return ` ${label}: ¥${value.toLocaleString()}`;
                                     }
                                 }
                             }
                         },
-                        cutout: '70%' // Corrected key for doughnut hole size
+                        cutout: '75%', // Increased cutout for more modern look
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
                     }
                 });
             }
