@@ -172,7 +172,7 @@
         </main>
 
         <!-- FAB -->
-        <div class="fixed bottom-24 right-5 z-40">
+        <div class="fixed bottom-24 right-6 z-40 md:right-1/2 md:translate-x-[200px]">
             <button id="addExpenseBtn" onclick="openModal()" disabled
                 class="flex size-14 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg shadow-primary/30 transition hover:scale-105 active:scale-95 disabled:grayscale disabled:opacity-50">
                 <span class="material-symbols-outlined" style="font-size: 28px;">add</span>
@@ -296,7 +296,7 @@
 
         <!-- Bottom Navigation -->
         <nav
-            class="fixed bottom-0 z-30 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 pb-safe pt-2">
+            class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-gray-100 dark:border-white/5 z-40">
             <div class="flex justify-around items-center h-16 px-2">
                 <a href="trips.html"
                     class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
@@ -581,21 +581,40 @@
             const summaryCard = document.getElementById('summary-card');
             const empty = document.getElementById('empty-expenses');
 
-            if (!currentTrip) return;
-
-            const rawExpenses = currentTrip.expenses || [];
-            const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
-
-            if (expensesArray.length === 0) {
+            if (!currentTrip) {
+                empty.innerHTML = `
+                    <div class="flex flex-col items-center">
+                        <span class="material-symbols-outlined text-6xl mb-4 opacity-20">search</span>
+                        <p class="font-bold text-text-sub-light">請從上方選單選擇行程</p>
+                        <p class="text-[10px] text-text-sub-light opacity-50">選取後即可查看支出與結算</p>
+                    </div>
+                `;
+                empty.classList.remove('hidden');
                 container.innerHTML = '';
-                container.appendChild(empty);
                 summaryCard.classList.add('hidden');
                 document.getElementById('settlement-section').classList.add('hidden');
                 return;
             }
 
-            summaryCard.classList.remove('hidden');
+            const rawExpenses = currentTrip.expenses || [];
+            const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
+
+            if (expensesArray.length === 0) {
+                empty.innerHTML = `
+                    <div class="flex flex-col items-center">
+                        <span class="material-symbols-outlined text-6xl mb-4 opacity-20">receipt_long</span>
+                        <p class="font-bold text-text-sub-light">尚未有任何支出紀錄</p>
+                    </div>
+                `;
+                empty.classList.remove('hidden');
+                container.innerHTML = '';
+                summaryCard.classList.add('hidden');
+                document.getElementById('settlement-section').classList.add('hidden');
+                return;
+            }
+
             empty.classList.add('hidden');
+            summaryCard.classList.remove('hidden');
 
             const expenses = [...expensesArray].sort((a, b) => b.id - a.id);
 
