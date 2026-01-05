@@ -11,6 +11,7 @@ let app = null;
 let db = null;
 let currentUser = null;
 let currentGroup = null;
+const KEY_SELECTED_TRIP = 'selected_trip_id';
 
 // Initialize automatically if configs exist
 export function initApp() {
@@ -96,21 +97,70 @@ export function listenToTrip(tripId, callback) {
     if (!db || !currentGroup) return;
 
     const tripRef = ref(db, `groups/${currentGroup}/trips/${tripId}`);
-    onValue(tripRef, (snapshot) => {
+    return onValue(tripRef, (snapshot) => {
         const trip = snapshot.val();
         callback(trip);
     });
 }
 
 // Update Trip (with Editor tracking)
-export function updateTrip(tripData) {
+export async function updateTrip(tripData) {
     if (!db || !currentGroup) return;
 
     tripData.lastEditor = currentUser;
-    tripData.lastEditedAt = new Date().toLocaleString('zh-TW'); // Readablestring
+    tripData.lastEditedAt = new Date().toLocaleString('zh-TW');
 
-    const tripRef = ref(db, `groups/${currentGroup}/trips/${tripData.id}`);
-    return update(tripRef, tripData);
+    try {
+        const tripRef = ref(db, `groups/${currentGroup}/trips/${tripData.id}`);
+        await update(tripRef, tripData);
+        return true;
+    } catch (e) {
+        console.error("Update Trip Failed", e);
+        return false;
+    }
+}
+
+// Granular Expense Update
+export async function saveExpense(tripId, expense) {
+    if (!db || !currentGroup) return false;
+    try {
+        const expenseRef = ref(db, `groups/${currentGroup}/trips/${tripId}/expenses/${expense.id}`);
+        await set(expenseRef, expense);
+
+        // Also update last editor on the trip
+        const tripMetaRef = ref(db, `groups/${currentGroup}/trips/${tripId}`);
+        await update(tripMetaRef, {
+            lastEditor: currentUser,
+            lastEditedAt: new Date().toLocaleString('zh-TW')
+        });
+        return true;
+    } catch (e) {
+        console.error("Save Expense Failed", e);
+        return false;
+    }
+}
+
+// Granular Expense Delete
+export async function deleteExpenseSingle(tripId, expenseId) {
+    if (!db || !currentGroup) return false;
+    try {
+        const expenseRef = ref(db, `groups/${currentGroup}/trips/${tripId}/expenses/${expenseId}`);
+        await remove(expenseRef);
+        return true;
+    } catch (e) {
+        console.error("Delete Expense Failed", e);
+        return false;
+    }
+}
+
+// Persistence for selected trip
+export function setSelectedTrip(tripId) {
+    if (tripId) localStorage.setItem(KEY_SELECTED_TRIP, tripId);
+    else localStorage.removeItem(KEY_SELECTED_TRIP);
+}
+
+export function getSelectedTrip() {
+    return localStorage.getItem(KEY_SELECTED_TRIP);
 }
 
 // Delete Trip

@@ -300,11 +300,16 @@
     <!-- Theme & Firebase Logic -->
     <script type="module">
         import './theme-manager.js';
-        import { initApp, syncTripsList, updateTrip, getUserName } from './firebase-manager.js';
+        import {
+            initApp, syncTripsList, updateTrip, getUserName,
+            listenToTrip, saveExpense, deleteExpenseSingle,
+            setSelectedTrip, getSelectedTrip
+        } from './firebase-manager.js';
 
         let allTrips = [];
         let currentTripId = null;
         let currentTrip = null;
+        let unlistenTrip = null;
 
         // Auto Dark Mode
         if (localStorage.getItem('darkMode') === 'true') {
@@ -350,7 +355,9 @@
             syncTripsList((trips) => {
                 allTrips = trips;
                 const select = document.getElementById('tripSelect');
-                const oldVal = select.value;
+                const savedId = getSelectedTrip();
+                const currentVal = select.value;
+
                 select.innerHTML = '<option value="">-- 請選擇行程 --</option>';
 
                 trips.forEach(t => {
@@ -360,13 +367,53 @@
                     select.appendChild(opt);
                 });
 
-                if (oldVal && trips.find(t => t.id == oldVal)) {
-                    select.value = oldVal;
-                    currentTrip = trips.find(t => t.id == oldVal);
-                    updateParticipantList();
-                    renderExpenses();
+                // Priority: Current Selection > Saved Selection
+                const idToSelect = currentVal || savedId;
+                if (idToSelect && trips.find(t => t.id == idToSelect)) {
+                    select.value = idToSelect;
+                    if (currentTripId !== idToSelect) {
+                        handleTripChange(idToSelect);
+                    }
                 }
             });
+
+            function handleTripChange(id) {
+                currentTripId = id;
+                setSelectedTrip(id);
+
+                if (!id) {
+                    stopListening();
+                    currentTrip = null;
+                    renderExpenses();
+                    document.getElementById('addExpenseBtn').disabled = true;
+                    document.getElementById('summary-card').classList.add('hidden');
+                    document.getElementById('current-trip-name').innerText = "請選擇行程";
+                    document.getElementById('settlement-section').classList.add('hidden');
+                    return;
+                }
+
+                document.getElementById('addExpenseBtn').disabled = false;
+                startListening(id);
+            }
+
+            function startListening(id) {
+                stopListening();
+                // Listen specifically to this trip for real-time updates
+                unlistenTrip = listenToTrip(id, (trip) => {
+                    if (!trip) return;
+                    currentTrip = trip;
+                    document.getElementById('current-trip-name').innerText = trip.name;
+                    updateParticipantList();
+                    renderExpenses();
+                });
+            }
+
+            function stopListening() {
+                if (typeof unlistenTrip === 'function') {
+                    unlistenTrip();
+                    unlistenTrip = null;
+                }
+            }
 
             function updateParticipantList() {
                 if (!currentTrip) return;
@@ -394,24 +441,7 @@
             }
 
             document.getElementById('tripSelect').addEventListener('change', (e) => {
-                const id = e.target.value;
-                currentTripId = id;
-                if (!id) {
-                    currentTrip = null;
-                    renderExpenses();
-                    document.getElementById('addExpenseBtn').disabled = true;
-                    document.getElementById('summary-card').classList.add('hidden');
-                    document.getElementById('current-trip-name').innerText = "請選擇行程";
-                    document.getElementById('settlement-section').classList.add('hidden'); // Hide settlement when no trip selected
-                    return;
-                }
-
-                currentTrip = allTrips.find(t => t.id == id);
-                document.getElementById('addExpenseBtn').disabled = false;
-                document.getElementById('current-trip-name').innerText = currentTrip.name;
-
-                updateParticipantList();
-                renderExpenses();
+                handleTripChange(e.target.value);
             });
         });
 
@@ -442,9 +472,13 @@
             }, 300);
         }
 
-        window.handleFormSubmit = function (e) {
+        window.handleFormSubmit = async function (e) {
             e.preventDefault();
-            if (!currentTrip) return;
+            if (!currentTripId) return;
+
+            const saveBtn = document.getElementById('saveExpenseBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerText = "儲存中...";
 
             try {
                 const amountJpy = parseInt(document.getElementById('expAmount').value);
@@ -453,11 +487,15 @@
 
                 if (isNaN(amountJpy) || amountJpy <= 0) {
                     alert("請輸入正確金額");
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "儲存支出";
                     return;
                 }
 
                 if (participants.length === 0) {
                     alert("請至少選擇一位分帳成員");
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "儲存支出";
                     return;
                 }
 
@@ -475,38 +513,29 @@
                     time: new Date().toISOString()
                 };
 
-                // Normalize expenses to array
-                const rawExpenses = currentTrip.expenses || [];
-                const expensesArray = Array.isArray(rawExpenses) ? rawExpenses : Object.values(rawExpenses);
-                expensesArray.push(expense);
-                currentTrip.expenses = expensesArray;
-
-                updateTrip(currentTrip);
-                renderExpenses();
-                window.closeModal();
+                const success = await saveExpense(currentTripId, expense);
+                if (success) {
+                    window.closeModal();
+                } else {
+                    alert("儲存失敗，請檢查網路連線");
+                }
             } catch (err) {
                 console.error("Save expense failed", err);
-                // Fallback to close modal anyway so it doesn't get stuck
-                window.closeModal();
+                alert("發生錯誤：" + err.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "儲存支出";
             }
         }
 
-        window.deleteExpense = function (expId) {
+        window.deleteExpense = async function (expId) {
             if (!confirm('確定刪除這筆支出嗎？')) return;
+            if (!currentTripId) return;
 
-            // Generate a filtered array (Firebase sometimes returns objects, but locally we use arrays)
-            const expensesArray = Array.isArray(currentTrip.expenses)
-                ? currentTrip.expenses
-                : Object.values(currentTrip.expenses || {});
-
-            const newExpenses = expensesArray.filter(e => e.id != expId);
-            currentTrip.expenses = newExpenses;
-
-            // Update UI immediately (Optimistic UI)
-            renderExpenses();
-
-            // Sync to Firebase
-            updateTrip(currentTrip);
+            const success = await deleteExpenseSingle(currentTripId, expId);
+            if (!success) {
+                alert("刪除失敗");
+            }
         }
 
         function renderExpenses() {
