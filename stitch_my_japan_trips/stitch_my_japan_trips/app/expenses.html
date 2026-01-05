@@ -519,10 +519,10 @@
             }
 
             modalOverlay.classList.remove('hidden');
-            setTimeout(() => {
-                modalOverlay.classList.remove('opacity-0');
-                modalContent.classList.remove('translate-y-full');
-            }, 10);
+            // Force reflow
+            modalOverlay.offsetHeight;
+            modalOverlay.classList.remove('opacity-0');
+            modalContent.classList.remove('translate-y-full');
             document.body.style.overflow = 'hidden';
         }
 
@@ -530,13 +530,12 @@
             const modalOverlay = document.getElementById('modal-overlay');
             const modalContent = document.getElementById('modal-content');
             if (modalOverlay) modalOverlay.classList.add('opacity-0');
-            if (modalContent) {
-                modalContent.classList.add('translate-y-full');
-                modalContent.style.transform = ''; // Reset swipe transform
-            }
+            if (modalContent) modalContent.classList.add('translate-y-full');
+
             setTimeout(() => {
                 if (modalOverlay) modalOverlay.classList.add('hidden');
-                document.body.style.overflow = ''; // Restore scroll
+                document.body.style.overflow = '';
+                editingId = null;
             }, 300);
         }
 
