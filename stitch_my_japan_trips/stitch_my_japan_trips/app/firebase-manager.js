@@ -122,22 +122,26 @@ export async function updateTrip(tripData) {
 
 // Granular Expense Update
 export async function saveExpense(tripId, expense) {
-    if (!db || !currentGroup) return false;
-    try {
-        const expenseRef = ref(db, `groups/${currentGroup}/trips/${tripId}/expenses/${expense.id}`);
-        await set(expenseRef, expense);
+    if (!db || !currentGroup) throw new Error("尚未連線到 Firebase (資料庫或群組 ID 缺失)");
 
-        // Also update last editor on the trip
-        const tripMetaRef = ref(db, `groups/${currentGroup}/trips/${tripId}`);
-        await update(tripMetaRef, {
-            lastEditor: currentUser,
-            lastEditedAt: new Date().toLocaleString('zh-TW')
-        });
-        return true;
-    } catch (e) {
-        console.error("Save Expense Failed", e);
-        return false;
-    }
+    const expenseRef = ref(db, `groups/${currentGroup}/trips/${tripId}/expenses/${expense.id}`);
+    await set(expenseRef, expense);
+
+    // Also update last editor on the trip
+    const tripMetaRef = ref(db, `groups/${currentGroup}/trips/${tripId}`);
+    await update(tripMetaRef, {
+        lastEditor: currentUser,
+        lastEditedAt: new Date().toLocaleString('zh-TW')
+    });
+    return true;
+}
+
+// Granular Tax Refund Toggle
+export async function updateTaxRefundStatus(tripId, expenseId, isTaxRefund) {
+    if (!db || !currentGroup) throw new Error("尚未連線到 Firebase");
+    const expenseRef = ref(db, `groups/${currentGroup}/trips/${tripId}/expenses/${expenseId}`);
+    await update(expenseRef, { isTaxRefund });
+    return true;
 }
 
 // Granular Expense Delete
