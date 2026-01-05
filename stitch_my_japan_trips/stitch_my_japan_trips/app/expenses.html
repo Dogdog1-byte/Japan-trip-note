@@ -297,7 +297,7 @@
         <!-- Bottom Navigation -->
         <nav
             class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-gray-100 dark:border-white/5 z-40">
-            <div class="flex justify-around items-center h-16 px-2">
+            <div class="max-w-md mx-auto flex justify-around items-center h-16 px-2">
                 <a href="trips.html"
                     class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
                     <span class="material-symbols-outlined">home</span>
@@ -645,35 +645,27 @@
                 ` : '';
 
                 return `
-                    <div class="swipe-container mb-4">
-                        <div class="swipe-action" onclick="deleteExpense(${exp.id})">
-                            <span class="material-symbols-outlined">delete</span>
-                        </div>
-                        <div class="swipe-item bg-white dark:bg-surface-dark p-4 shadow-sm border border-transparent hover:border-primary/20 transition group relative"
-                             ontouchstart="handleSwipeStart(event)" 
-                             ontouchmove="handleSwipeMove(event)" 
-                             ontouchend="handleSwipeEnd(event, ${exp.id})">
-                            <div class="flex items-start gap-3">
-                                <div class="flex items-center gap-3 flex-1 min-w-0">
-                                    <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                        <span class="material-symbols-outlined text-xl">${getCatIcon(exp.category)}</span>
+                    <div class="flex items-stretch gap-2 mb-4">
+                        <div class="swipe-container flex-1">
+                            <div class="swipe-action" onclick="deleteExpense(${exp.id})">
+                                <span class="material-symbols-outlined">delete</span>
+                            </div>
+                            <div class="swipe-item bg-white dark:bg-surface-dark p-4 shadow-sm border border-transparent hover:border-primary/20 transition group relative h-full"
+                                ontouchstart="handleSwipeStart(event)" 
+                                ontouchmove="handleSwipeMove(event)" 
+                                ontouchend="handleSwipeEnd(event, ${exp.id})">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex items-center gap-3">
+                                        <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                            <span class="material-symbols-outlined text-xl">${getCatIcon(exp.category)}</span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <h4 class="font-bold text-base truncate">${exp.title}</h4>
+                                            <p class="text-[10px] text-text-sub-light truncate">${exp.method || '現金'} · ${splitText}</p>
+                                            ${refundTag}
+                                        </div>
                                     </div>
-                                    <div class="min-w-0 flex-1">
-                                        <h4 class="font-bold text-base truncate">${exp.title}</h4>
-                                        <p class="text-[10px] text-text-sub-light truncate">${exp.method || '現金'} · ${splitText}</p>
-                                        ${refundTag}
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-start gap-4 shrink-0">
-                                    <label class="flex flex-col items-center gap-1 cursor-pointer group/tax w-8 shrink-0">
-                                        <span class="text-[8px] font-black opacity-30 group-hover/tax:opacity-60 transition-opacity">退稅</span>
-                                        <input type="checkbox" 
-                                            ${exp.isTaxRefund ? 'checked' : ''} 
-                                            onclick="toggleTaxRefund(${exp.id}, this.checked)"
-                                            class="rounded border-gray-300 dark:border-white/10 text-primary focus:ring-primary size-4">
-                                    </label>
-                                    <div class="text-right flex flex-col items-end min-w-[85px]">
+                                    <div class="text-right flex flex-col items-end">
                                         <p class="font-black text-lg text-primary leading-tight">¥ ${exp.amount.toLocaleString()}</p>
                                         <p class="text-[10px] text-text-sub-light">≈ NT$ ${(exp.amountTwd || 0).toLocaleString()}</p>
                                         ${exp.url ? `
@@ -684,15 +676,26 @@
                                         ` : ''}
                                     </div>
                                 </div>
+                                ${exp.desc ? `
+                                    <div class="mt-3 pt-3 border-t border-gray-50 dark:border-white/5 text-[11px] text-text-sub-light italic leading-relaxed whitespace-pre-wrap">
+                                        ${exp.desc}
+                                    </div>
+                                ` : ''}
+                                <button onclick="deleteExpense(${exp.id})" class="absolute -top-1 -right-1 size-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg z-10 md:flex hidden">
+                                    <span class="material-symbols-outlined text-xs">close</span>
+                                </button>
                             </div>
-                            ${exp.desc ? `
-                                <div class="mt-3 pt-3 border-t border-gray-50 dark:border-white/5 text-[11px] text-text-sub-light italic leading-relaxed whitespace-pre-wrap">
-                                    ${exp.desc}
-                                </div>
-                            ` : ''}
-                            <button onclick="deleteExpense(${exp.id})" class="absolute -top-1 -right-1 size-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg z-10 md:flex hidden">
-                                <span class="material-symbols-outlined text-xs">close</span>
-                            </button>
+                        </div>
+                        
+                        <!-- Independent Tax Refund Card -->
+                        <div class="w-16 shrink-0 bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition flex flex-col items-center justify-center">
+                            <label class="flex flex-col items-center gap-1.5 cursor-pointer group/tax w-full h-full justify-center">
+                                <span class="text-[8px] font-black opacity-30 group-hover/tax:opacity-60 transition-opacity uppercase tracking-tighter">退稅</span>
+                                <input type="checkbox" 
+                                    ${exp.isTaxRefund ? 'checked' : ''} 
+                                    onclick="toggleTaxRefund(${exp.id}, this.checked)"
+                                    class="rounded border-gray-300 dark:border-white/10 text-primary focus:ring-primary size-5">
+                            </label>
                         </div>
                     </div>
                 `;
