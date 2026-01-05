@@ -653,27 +653,28 @@
                              ontouchstart="handleSwipeStart(event)" 
                              ontouchmove="handleSwipeMove(event)" 
                              ontouchend="handleSwipeEnd(event, ${exp.id})">
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center gap-3">
-                                    <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <div class="flex items-start gap-3">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                                         <span class="material-symbols-outlined text-xl">${getCatIcon(exp.category)}</span>
                                     </div>
-                                    <div class="min-w-0">
+                                    <div class="min-w-0 flex-1">
                                         <h4 class="font-bold text-base truncate">${exp.title}</h4>
                                         <p class="text-[10px] text-text-sub-light truncate">${exp.method || '現金'} · ${splitText}</p>
                                         ${refundTag}
                                     </div>
                                 </div>
-                                <div class="flex items-start gap-3">
-                                    <label class="flex flex-col items-center gap-1 cursor-pointer group/tax">
+                                
+                                <div class="flex items-start gap-4 shrink-0">
+                                    <label class="flex flex-col items-center gap-1 cursor-pointer group/tax w-8 shrink-0">
                                         <span class="text-[8px] font-black opacity-30 group-hover/tax:opacity-60 transition-opacity">退稅</span>
                                         <input type="checkbox" 
                                             ${exp.isTaxRefund ? 'checked' : ''} 
                                             onclick="toggleTaxRefund(${exp.id}, this.checked)"
                                             class="rounded border-gray-300 dark:border-white/10 text-primary focus:ring-primary size-4">
                                     </label>
-                                    <div class="text-right flex flex-col items-end">
-                                        <p class="font-black text-lg text-primary">¥ ${exp.amount.toLocaleString()}</p>
+                                    <div class="text-right flex flex-col items-end min-w-[85px]">
+                                        <p class="font-black text-lg text-primary leading-tight">¥ ${exp.amount.toLocaleString()}</p>
                                         <p class="text-[10px] text-text-sub-light">≈ NT$ ${(exp.amountTwd || 0).toLocaleString()}</p>
                                         ${exp.url ? `
                                             <a href="${exp.url}" target="_blank" class="mt-2 text-primary flex items-center gap-0.5">
