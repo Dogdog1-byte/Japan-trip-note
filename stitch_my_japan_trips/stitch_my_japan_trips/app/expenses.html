@@ -473,6 +473,7 @@
         });
 
         window.openModal = function (expId = null) {
+            console.log("openModal called with ID:", expId);
             const modalOverlay = document.getElementById('modal-overlay');
             const modalContent = document.getElementById('modal-content');
             const modalTitle = modalContent.querySelector('h3');
@@ -483,11 +484,11 @@
             updateParticipantList(); // Re-render members
 
             if (editingId && currentTrip && currentTrip.expenses) {
-                const exp = Array.isArray(currentTrip.expenses)
-                    ? currentTrip.expenses.find(e => e.id == editingId)
-                    : currentTrip.expenses[editingId];
+                const expensesArray = Array.isArray(currentTrip.expenses) ? currentTrip.expenses : Object.values(currentTrip.expenses);
+                const exp = expensesArray.find(e => e.id == editingId);
 
                 if (exp) {
+                    console.log("Editing expense found:", exp);
                     modalTitle.innerText = "編輯 / 詳細資訊";
                     document.getElementById('expAmount').value = exp.amount;
                     document.getElementById('expCategory').value = exp.category;
