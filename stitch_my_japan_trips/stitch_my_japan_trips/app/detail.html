@@ -68,10 +68,19 @@
                     👥 設定成員
                 </button>
             </div>
-            <button onclick="shareTrip()"
-                class="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition text-primary">
-                <span class="material-symbols-outlined">share</span>
-            </button>
+            <div class="flex gap-1">
+                <button onclick="openTicketsModal()"
+                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition text-primary relative"
+                    title="機票管理">
+                    <span class="material-symbols-outlined">confirmation_number</span>
+                    <span id="tickets-badge"
+                        class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                </button>
+                <button onclick="shareTrip()"
+                    class="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition text-primary">
+                    <span class="material-symbols-outlined">share</span>
+                </button>
+            </div>
         </header>
 
         <!-- Date Tabs -->
@@ -167,23 +176,19 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">照片 (選填)</label>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">照片 (選填，可多選)</label>
                     <div class="flex items-center gap-4">
                         <label
                             class="flex-1 cursor-pointer bg-gray-50 dark:bg-black/20 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-white/5 transition">
                             <span class="material-symbols-outlined text-primary">add_photo_alternate</span>
                             <span class="text-xs font-bold text-text-sub-light">上傳照片</span>
-                            <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                            <input type="file" accept="image/*" multiple class="hidden"
+                                onchange="handleImageUpload(event)">
                         </label>
-                        <input type="hidden" id="itemImage">
+                        <input type="hidden" id="itemImages">
                     </div>
-                    <div id="imagePreview" class="hidden mt-3 relative w-full h-32 rounded-xl overflow-hidden group">
-                        <img id="previewImg" class="w-full h-full object-cover">
-                        <button type="button"
-                            onclick="document.getElementById('itemImage').value=''; document.getElementById('imagePreview').classList.add('hidden')"
-                            class="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-red-500 transition">
-                            <span class="material-symbols-outlined text-sm">close</span>
-                        </button>
+                    <div id="imagePreview" class="hidden mt-3">
+                        <div id="imageGrid" class="grid grid-cols-3 gap-2"></div>
                     </div>
                 </div>
 
@@ -194,6 +199,58 @@
                     </button>
                 </div>
             </form>
+        </div>
+
+        <!-- Tickets Upload Modal -->
+        <div id="tickets-modal-overlay"
+            class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"
+            onclick="closeTicketsModal()"></div>
+        <div id="tickets-modal-content"
+            class="fixed bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto max-w-md mx-auto">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">機票管理</h3>
+                <button onclick="closeTicketsModal()"
+                    class="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="mb-6">
+                <label
+                    class="w-full cursor-pointer bg-primary/10 hover:bg-primary/20 border-2 border-dashed border-primary rounded-2xl p-6 flex flex-col items-center justify-center gap-2 transition">
+                    <span class="material-symbols-outlined text-primary text-4xl">upload_file</span>
+                    <span class="text-sm font-bold text-primary">點擊上傳機票</span>
+                    <span class="text-xs text-text-sub-light dark:text-text-sub-dark">支援 JPG、PNG、PDF</span>
+                    <input type="file" accept="image/*,.pdf" multiple class="hidden"
+                        onchange="handleTicketUpload(event)">
+                </label>
+            </div>
+
+            <!-- Tickets List -->
+            <div id="tickets-list" class="space-y-3">
+                <p class="text-center text-text-sub-light dark:text-text-sub-dark text-sm py-8">尚未上傳任何機票</p>
+            </div>
+        </div>
+
+        <!-- Ticket View Modal -->
+        <div id="ticket-view-overlay"
+            class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"
+            onclick="closeTicketView()"></div>
+        <div id="ticket-view-content"
+            class="fixed inset-4 z-[60] bg-surface-light dark:bg-surface-dark rounded-3xl p-6 transform scale-95 opacity-0 transition-all duration-300 max-w-2xl mx-auto my-auto max-h-[90vh] overflow-y-auto hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold" id="ticket-view-title">機票預覽</h3>
+                <button onclick="closeTicketView()"
+                    class="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="ticket-view-image" class="w-full rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <!-- Image will be injected here -->
+            </div>
         </div>
 
         <!-- Bottom Navigation -->
@@ -233,6 +290,7 @@
         let currentDayIndex = 0;
         let tripDays = [];
         let tripId = null;
+        let tickets = []; // Store tickets
 
         // Auto Dark Mode
         if (localStorage.getItem('darkMode') === 'true') {
@@ -295,14 +353,11 @@
                 document.getElementById('modal-title').innerText = '新增行程';
                 document.getElementById('deleteBtn').classList.add('hidden');
                 document.getElementById('itemTime').value = '09:00';
+                document.getElementById('itemImages').value = '';
                 document.getElementById('imagePreview').classList.add('hidden');
                 document.getElementById('itemUrl').value = '';
             } else {
-                const imgUrl = document.getElementById('itemImage').value;
-                if (imgUrl) {
-                    document.getElementById('previewImg').src = imgUrl;
-                    document.getElementById('imagePreview').classList.remove('hidden');
-                }
+                updateImagePreview();
             }
 
             modalOverlay.classList.remove('hidden');
@@ -350,17 +405,227 @@
             currentTranslateY = 0;
         });
 
+        // Tickets Management Functions
+        window.openTicketsModal = function () {
+            const overlay = document.getElementById('tickets-modal-overlay');
+            const content = document.getElementById('tickets-modal-content');
+
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth;
+            overlay.classList.remove('opacity-0');
+            content.classList.remove('translate-y-full');
+            document.body.style.overflow = 'hidden';
+
+            renderTicketsList();
+        }
+
+        window.closeTicketsModal = function () {
+            const overlay = document.getElementById('tickets-modal-overlay');
+            const content = document.getElementById('tickets-modal-content');
+
+            overlay.classList.add('opacity-0');
+            content.classList.add('translate-y-full');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        window.handleTicketUpload = function (event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const ticketData = {
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        data: e.target.result,
+                        type: file.type,
+                        uploadedAt: new Date().toISOString()
+                    };
+
+                    if (!currentTrip.tickets) currentTrip.tickets = [];
+                    currentTrip.tickets.push(ticketData);
+                    saveTrip();
+                    renderTicketsList();
+                    updateTicketsBadge();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            event.target.value = '';
+        }
+
+        function renderTicketsList() {
+            const container = document.getElementById('tickets-list');
+            const ticketsList = currentTrip.tickets || [];
+
+            if (ticketsList.length === 0) {
+                container.innerHTML = '<p class="text-center text-text-sub-light dark:text-text-sub-dark text-sm py-8">尚未上傳任何機票</p>';
+                return;
+            }
+
+            container.innerHTML = ticketsList.map((ticket, index) => `
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition group">
+                    <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary">${ticket.type === 'application/pdf' ? 'picture_as_pdf' : 'image'}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-sm truncate">${ticket.name}</p>
+                        <p class="text-xs text-text-sub-light dark:text-text-sub-dark">${new Date(ticket.uploadedAt).toLocaleDateString()}</p>
+                    </div>
+                    <button onclick="viewTicket(${index})" class="p-2 hover:bg-primary/10 rounded-lg transition">
+                        <span class="material-symbols-outlined text-primary">visibility</span>
+                    </button>
+                    <button onclick="deleteTicket(${index})" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition opacity-0 group-hover:opacity-100">
+                        <span class="material-symbols-outlined text-red-500">delete</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.viewTicket = function (index) {
+            const ticket = currentTrip.tickets[index];
+            if (!ticket) return;
+
+            const overlay = document.getElementById('ticket-view-overlay');
+            const content = document.getElementById('ticket-view-content');
+            const imageContainer = document.getElementById('ticket-view-image');
+            const title = document.getElementById('ticket-view-title');
+
+            title.innerText = ticket.name;
+
+            if (ticket.type === 'application/pdf') {
+                imageContainer.innerHTML = `<embed src="${ticket.data}" type="application/pdf" class="w-full h-[70vh]" />`;
+            } else {
+                imageContainer.innerHTML = `<img src="${ticket.data}" class="w-full h-auto" alt="${ticket.name}" />`;
+            }
+
+            overlay.classList.remove('hidden');
+            content.classList.remove('hidden');
+            void overlay.offsetWidth;
+            overlay.classList.remove('opacity-0');
+            content.classList.remove('scale-95', 'opacity-0');
+        }
+
+        window.closeTicketView = function () {
+            const overlay = document.getElementById('ticket-view-overlay');
+            const content = document.getElementById('ticket-view-content');
+
+            overlay.classList.add('opacity-0');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                content.classList.add('hidden');
+            }, 300);
+        }
+
+        window.deleteTicket = function (index) {
+            if (!confirm('確定要刪除此機票？')) return;
+
+            currentTrip.tickets.splice(index, 1);
+            saveTrip();
+            renderTicketsList();
+            updateTicketsBadge();
+        }
+
+        function updateTicketsBadge() {
+            const badge = document.getElementById('tickets-badge');
+            const count = (currentTrip.tickets || []).length;
+
+            if (count > 0) {
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
         window.handleImageUpload = function (event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64 = e.target.result;
-                document.getElementById('itemImage').value = base64;
-                document.getElementById('previewImg').src = base64;
-                document.getElementById('imagePreview').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            // 取得現有照片
+            let existingImages = [];
+            const itemImagesValue = document.getElementById('itemImages').value;
+            if (itemImagesValue) {
+                try {
+                    existingImages = JSON.parse(itemImagesValue);
+                } catch (e) {
+                    existingImages = [];
+                }
+            }
+
+            // 處理所有新上傳的檔案
+            let processedCount = 0;
+            Array.from(files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64 = e.target.result;
+                    existingImages.push(base64);
+                    processedCount++;
+
+                    // 當所有檔案都處理完成後更新預覽
+                    if (processedCount === files.length) {
+                        document.getElementById('itemImages').value = JSON.stringify(existingImages);
+                        updateImagePreview();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // 清空 input 以允許重複選擇相同檔案
+            event.target.value = '';
+        }
+
+        window.updateImagePreview = function () {
+            const itemImagesValue = document.getElementById('itemImages').value;
+            const imageGrid = document.getElementById('imageGrid');
+            const imagePreview = document.getElementById('imagePreview');
+
+            if (!itemImagesValue) {
+                imagePreview.classList.add('hidden');
+                return;
+            }
+
+            let images = [];
+            try {
+                images = JSON.parse(itemImagesValue);
+            } catch (e) {
+                images = [];
+            }
+
+            if (images.length === 0) {
+                imagePreview.classList.add('hidden');
+                return;
+            }
+
+            imagePreview.classList.remove('hidden');
+            imageGrid.innerHTML = images.map((imgBase64, index) => `
+                <div class="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <img src="${imgBase64}" class="w-full h-full object-cover" />
+                    <button type="button" onclick="removeImage(${index})"
+                        class="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 hover:bg-red-500 transition">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.removeImage = function (index) {
+            const itemImagesValue = document.getElementById('itemImages').value;
+            let images = [];
+            try {
+                images = JSON.parse(itemImagesValue);
+            } catch (e) {
+                images = [];
+            }
+
+            images.splice(index, 1);
+            document.getElementById('itemImages').value = images.length > 0 ? JSON.stringify(images) : '';
+            updateImagePreview();
         }
 
         window.handleFormSubmit = function (e) {
@@ -371,13 +636,24 @@
             if (!currentTrip.itinerary) currentTrip.itinerary = {};
             if (!currentTrip.itinerary[dayKey]) currentTrip.itinerary[dayKey] = [];
 
+            // 解析照片數組
+            let images = [];
+            const itemImagesValue = document.getElementById('itemImages').value;
+            if (itemImagesValue) {
+                try {
+                    images = JSON.parse(itemImagesValue);
+                } catch (e) {
+                    images = [];
+                }
+            }
+
             const newItem = {
                 id: id ? parseInt(id) : Date.now(),
                 time: document.getElementById('itemTime').value,
                 name: document.getElementById('itemName').value || '未命名項目',
                 desc: document.getElementById('itemDesc').value,
                 tag: document.getElementById('itemTag').value,
-                image: document.getElementById('itemImage').value,
+                images: images,
                 link: document.getElementById('itemUrl').value
             };
 
@@ -402,7 +678,17 @@
             document.getElementById('itemName').value = item.name;
             document.getElementById('itemDesc').value = item.desc || '';
             document.getElementById('itemTag').value = item.tag || '景點';
-            document.getElementById('itemImage').value = item.image || '';
+
+            // 處理照片（支援舊版單張和新版多張）
+            let images = [];
+            if (item.images && Array.isArray(item.images)) {
+                images = item.images;
+            } else if (item.image) {
+                // 向後兼容：如果是舊版的單張照片，轉換為數組
+                images = [item.image];
+            }
+            document.getElementById('itemImages').value = images.length > 0 ? JSON.stringify(images) : '';
+
             document.getElementById('itemUrl').value = item.link || '';
 
             document.getElementById('modal-title').innerText = '編輯行程';
@@ -498,6 +784,7 @@
 
             renderTabs();
             renderTimeline();
+            updateTicketsBadge();
         }
 
         function renderTabs() {
@@ -546,7 +833,16 @@
             let html = '<div class="absolute bottom-0 left-[23px] top-2 w-0.5 bg-gray-200 dark:bg-gray-800"></div>';
             items.forEach((item, index) => {
                 const tag = item.tag || '一般';
-                const image = item.image;
+
+                // 處理照片（支援舊版單張和新版多張）
+                let images = [];
+                if (item.images && Array.isArray(item.images)) {
+                    images = item.images;
+                } else if (item.image) {
+                    images = [item.image];
+                }
+                const hasImages = images.length > 0;
+
                 const iconMap = {
                     '景點': 'landscape',
                     '美食': 'restaurant',
@@ -556,12 +852,19 @@
                 };
                 const tagIcon = iconMap[tag] || 'push_pin';
 
-                const imageBoxClass = image ? 'w-20 h-20' : 'w-12 h-12';
-                const iconSize = image ? 'text-3xl' : 'text-xl';
-                const tagFontSize = image ? 'text-[8px]' : 'text-[7px]';
+                const imageBoxClass = hasImages ? 'w-20 h-20' : 'w-12 h-12';
+                const iconSize = hasImages ? 'text-3xl' : 'text-xl';
+                const tagFontSize = hasImages ? 'text-[8px]' : 'text-[7px]';
 
-                const imageRender = image ?
-                    `<img src="${image}" class="h-full w-full object-cover" />` :
+                // 如果有多張照片，顯示第一張並標示數量
+                const imageRender = hasImages ?
+                    `<div class="relative h-full w-full">
+                        <img src="${images[0]}" class="h-full w-full object-cover" />
+                        ${images.length > 1 ? `<div class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                            <span class="material-symbols-outlined" style="font-size: 10px;">photo_library</span>
+                            ${images.length}
+                        </div>` : ''}
+                    </div>` :
                     `<div class="h-full w-full bg-primary/10 dark:bg-primary/20 flex flex-col items-center justify-center text-primary opacity-60">
                         <span class="material-symbols-outlined ${iconSize}">${tagIcon}</span>
                         <span class="${tagFontSize} font-bold mt-0.5 uppercase">${tag}</span>
