@@ -253,6 +253,41 @@
             </div>
         </div>
 
+        <!-- Photo Viewer Modal -->
+        <div id="photo-viewer-overlay"
+            class="fixed inset-0 z-[70] bg-black/95 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"
+            onclick="closePhotoViewer()"></div>
+        <div id="photo-viewer-content"
+            class="fixed inset-0 z-[70] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center">
+            <button onclick="closePhotoViewer()"
+                class="absolute top-4 right-4 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+
+            <!-- Photo Counter -->
+            <div
+                class="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-black/50 text-white px-4 py-2 rounded-full text-sm font-bold">
+                <span id="photo-current">1</span> / <span id="photo-total">1</span>
+            </div>
+
+            <!-- Previous Button -->
+            <button id="photo-prev-btn" onclick="previousPhoto()"
+                class="absolute left-4 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition hidden">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+
+            <!-- Photo Container -->
+            <div id="photo-container" class="w-full h-full flex items-center justify-center p-4">
+                <img id="photo-viewer-image" class="max-w-full max-h-full object-contain rounded-lg" />
+            </div>
+
+            <!-- Next Button -->
+            <button id="photo-next-btn" onclick="nextPhoto()"
+                class="absolute right-4 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition hidden">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+        </div>
+
         <!-- Bottom Navigation -->
         <nav
             class="fixed bottom-0 z-30 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 pb-safe pt-2">
@@ -540,6 +575,135 @@
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
+            }
+        }
+
+        // Photo Viewer Functions
+        let currentPhotos = [];
+        let currentPhotoIndex = 0;
+
+        window.openPhotoViewer = function (images, startIndex = 0) {
+            if (!images || images.length === 0) return;
+
+            currentPhotos = images;
+            currentPhotoIndex = startIndex;
+
+            const overlay = document.getElementById('photo-viewer-overlay');
+            const content = document.getElementById('photo-viewer-content');
+
+            overlay.classList.remove('hidden');
+            content.classList.remove('hidden');
+            void overlay.offsetWidth;
+            overlay.classList.remove('opacity-0');
+            content.classList.remove('opacity-0');
+            document.body.style.overflow = 'hidden';
+
+            updatePhotoViewer();
+            updatePhotoButtons();
+        }
+
+        window.closePhotoViewer = function () {
+            const overlay = document.getElementById('photo-viewer-overlay');
+            const content = document.getElementById('photo-viewer-content');
+
+            overlay.classList.add('opacity-0');
+            content.classList.add('opacity-0');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                content.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        window.nextPhoto = function () {
+            if (currentPhotoIndex < currentPhotos.length - 1) {
+                currentPhotoIndex++;
+                updatePhotoViewer();
+                updatePhotoButtons();
+            }
+        }
+
+        window.previousPhoto = function () {
+            if (currentPhotoIndex > 0) {
+                currentPhotoIndex--;
+                updatePhotoViewer();
+                updatePhotoButtons();
+            }
+        }
+
+        function updatePhotoViewer() {
+            const img = document.getElementById('photo-viewer-image');
+            const currentSpan = document.getElementById('photo-current');
+            const totalSpan = document.getElementById('photo-total');
+
+            img.src = currentPhotos[currentPhotoIndex];
+            currentSpan.innerText = currentPhotoIndex + 1;
+            totalSpan.innerText = currentPhotos.length;
+        }
+
+        function updatePhotoButtons() {
+            const prevBtn = document.getElementById('photo-prev-btn');
+            const nextBtn = document.getElementById('photo-next-btn');
+
+            // Hide/show buttons based on position
+            if (currentPhotoIndex === 0) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+
+            if (currentPhotoIndex === currentPhotos.length - 1) {
+                nextBtn.classList.add('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+            }
+
+            // Hide both if only one photo
+            if (currentPhotos.length === 1) {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+            }
+        }
+
+        // Add keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const overlay = document.getElementById('photo-viewer-overlay');
+            if (!overlay.classList.contains('hidden')) {
+                if (e.key === 'ArrowLeft') {
+                    previousPhoto();
+                } else if (e.key === 'ArrowRight') {
+                    nextPhoto();
+                } else if (e.key === 'Escape') {
+                    closePhotoViewer();
+                }
+            }
+        });
+
+        // Add touch swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.getElementById('photo-container').addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.getElementById('photo-container').addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Swipe left - next photo
+                    nextPhoto();
+                } else {
+                    // Swipe right - previous photo
+                    previousPhoto();
+                }
             }
         }
 
@@ -858,7 +1022,7 @@
 
                 // 如果有多張照片，顯示第一張並標示數量
                 const imageRender = hasImages ?
-                    `<div class="relative h-full w-full">
+                    `<div class="relative h-full w-full cursor-pointer" onclick="event.stopPropagation(); openPhotoViewer(${JSON.stringify(images).replace(/"/g, '&quot;')}, 0);">
                         <img src="${images[0]}" class="h-full w-full object-cover" />
                         ${images.length > 1 ? `<div class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                             <span class="material-symbols-outlined" style="font-size: 10px;">photo_library</span>
