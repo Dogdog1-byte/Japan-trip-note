@@ -724,6 +724,8 @@
 
             // 處理所有新上傳的檔案
             let processedCount = 0;
+            const totalFiles = files.length;
+
             Array.from(files).forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -732,16 +734,15 @@
                     processedCount++;
 
                     // 當所有檔案都處理完成後更新預覽
-                    if (processedCount === files.length) {
+                    if (processedCount === totalFiles) {
                         document.getElementById('itemImages').value = JSON.stringify(existingImages);
                         updateImagePreview();
+                        // 清空 input 以允許重複選擇相同檔案
+                        event.target.value = '';
                     }
                 };
                 reader.readAsDataURL(file);
             });
-
-            // 清空 input 以允許重複選擇相同檔案
-            event.target.value = '';
         }
 
         window.updateImagePreview = function () {
