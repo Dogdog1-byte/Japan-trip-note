@@ -84,7 +84,11 @@
 
         <main class="flex-1 px-4 pt-6 pb-20">
             <div class="flex items-center justify-between mb-6">
-                <h2 id="trip-day-display" class="text-2xl font-extrabold">Day 1</h2>
+                <button onclick="editDayTitle()" class="flex items-center gap-2 hover:opacity-70 transition group">
+                    <h2 id="trip-day-display" class="text-2xl font-extrabold">Day 1</h2>
+                    <span
+                        class="material-symbols-outlined text-lg opacity-0 group-hover:opacity-50 transition">edit</span>
+                </button>
                 <span id="items-count"
                     class="text-xs font-bold bg-white dark:bg-surface-dark px-3 py-1 rounded-full shadow-sm">0
                     個行程</span>
@@ -442,6 +446,26 @@
             }
         }
 
+        window.editDayTitle = function () {
+            if (!currentTrip) return;
+            const dayKey = `day${currentDayIndex + 1}`;
+
+            // 初始化 dayTitles 對象如果不存在
+            if (!currentTrip.dayTitles) {
+                currentTrip.dayTitles = {};
+            }
+
+            // 取得當前自定義標題或使用預設值
+            const currentTitle = currentTrip.dayTitles[dayKey] || `Day ${currentDayIndex + 1}`;
+            const newTitle = prompt("請輸入此天的自定義標題：\n(例如：東京市區、京都一日遊等)", currentTitle);
+
+            if (newTitle !== null && newTitle.trim()) {
+                currentTrip.dayTitles[dayKey] = newTitle.trim();
+                saveTrip();
+                renderTabs(); // 只需更新標題顯示
+            }
+        }
+
         // --- Core Rendering ---
 
         function renderAll() {
@@ -499,7 +523,11 @@
                     </button>
                 `;
             }).join('');
-            document.getElementById('trip-day-display').innerText = `Day ${currentDayIndex + 1}`;
+
+            // 顯示自定義標題或預設標題
+            const dayKey = `day${currentDayIndex + 1}`;
+            const customTitle = currentTrip.dayTitles && currentTrip.dayTitles[dayKey];
+            document.getElementById('trip-day-display').innerText = customTitle || `Day ${currentDayIndex + 1}`;
         }
 
         function renderTimeline() {
