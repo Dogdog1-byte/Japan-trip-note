@@ -135,8 +135,17 @@
                 </button>
             </div>
 
+            <!-- 類型切換 (新增時顯示) -->
+            <div id="type-selector" class="flex p-1 bg-gray-100 dark:bg-black/20 rounded-xl mb-6">
+                <button type="button" onclick="switchType('itinerary')" id="tab-itinerary"
+                    class="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white dark:bg-surface-dark shadow-sm">一般行程</button>
+                <button type="button" onclick="switchType('memo')" id="tab-memo"
+                    class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-gray-500 hover:text-text-main-light">獨立備註</button>
+            </div>
+
             <form id="itemForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
                 <input type="hidden" id="itemId">
+                <input type="hidden" id="itemType" value="itinerary">
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -144,7 +153,7 @@
                         <input type="time" id="itemTime" required
                             class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-lg font-bold focus:ring-1 focus:ring-primary text-center">
                     </div>
-                    <div>
+                    <div id="tag-field">
                         <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">類型</label>
                         <select id="itemTag"
                             class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 font-medium focus:ring-1 focus:ring-primary">
@@ -157,59 +166,72 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">名稱 (選填)</label>
-                    <input type="text" id="itemName" placeholder="例如：清水寺"
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">網址 (選填)</label>
-                    <input type="url" id="itemUrl" placeholder="https://..."
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">備註 (選填)</label>
-                    <textarea id="itemDesc" rows="2" placeholder="門票價格、訂位資訊..."
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">照片 (選填，可多選)</label>
-                    <div class="flex items-center gap-4">
-                        <label
-                            class="flex-1 cursor-pointer bg-gray-50 dark:bg-black/20 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-white/5 transition">
-                            <span class="material-symbols-outlined text-primary">add_photo_alternate</span>
-                            <span class="text-xs font-bold text-text-sub-light">上傳照片</span>
-                            <input type="file" accept="image/*" multiple class="hidden"
-                                onchange="handleImageUpload(event)">
-                        </label>
-                        <input type="hidden" id="itemImages">
+                <div id="itinerary-fields" class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">項目名稱</label>
+                        <input type="text" id="itemName" placeholder="例如：清水寺"
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-primary">
                     </div>
-                    <div id="imagePreview" class="hidden mt-3">
-                        <div id="imageGrid" class="grid grid-cols-3 gap-2"></div>
+
+                    <div>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">網址 (選填)</label>
+                        <input type="url" id="itemUrl" placeholder="https://..."
+                            class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">照片 (選填，可多選)</label>
+                        <div class="flex items-center gap-4">
+                            <label
+                                class="flex-1 cursor-pointer bg-gray-50 dark:bg-black/20 rounded-xl p-3 flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-white/5 transition">
+                                <span class="material-symbols-outlined text-primary">add_photo_alternate</span>
+                                <span class="text-xs font-bold text-text-sub-light">上傳照片</span>
+                                <input type="file" accept="image/*" multiple class="hidden"
+                                    onchange="handleImageUpload(event)">
+                            </label>
+                            <input type="hidden" id="itemImages">
+                        </div>
+                        <div id="imagePreview" class="hidden mt-3">
+                            <div id="imageGrid" class="grid grid-cols-3 gap-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">到下一站交通</label>
+                            <input type="text" id="itemTransportation" placeholder="例如：巴士"
+                                class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">乘坐時間</label>
+                            <input type="text" id="itemTravelTime" placeholder="例如：20分"
+                                class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-3 text-sm focus:ring-1 focus:ring-primary">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="memo-fields" class="hidden space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">備註標題</label>
+                        <input type="text" id="memoTitle" placeholder="例如：取票須知"
+                            class="w-full bg-yellow-50/50 dark:bg-yellow-900/10 border-none rounded-xl p-4 text-base font-bold focus:ring-1 focus:ring-yellow-400">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">到下一站的交通方式 (選填)</label>
-                    <input type="text" id="itemTransportation" placeholder="例如：富士急行巴士、步行、JR成田特快"
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">乘坐時間 (選填)</label>
-                    <input type="text" id="itemTravelTime" placeholder="例如：20分鐘、1.5小時"
-                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
+                    <label id="desc-label" class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">詳細說明 /
+                        內容</label>
+                    <textarea id="itemDesc" rows="3" placeholder="具體細節內容..."
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary resize-none"></textarea>
                 </div>
 
                 <div class="pt-4">
                     <button type="submit"
                         class="w-full py-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform">
-                        儲存行程
+                        儲存項目
                     </button>
                 </div>
+            </form>
             </form>
         </div>
 
@@ -805,6 +827,36 @@
             updateImagePreview();
         }
 
+        window.switchType = function (type) {
+            document.getElementById('itemType').value = type;
+            const itiFields = document.getElementById('itinerary-fields');
+            const memoFields = document.getElementById('memo-fields');
+            const tagField = document.getElementById('tag-field');
+            const btnItinerary = document.getElementById('tab-itinerary');
+            const btnMemo = document.getElementById('tab-memo');
+            const descLabel = document.getElementById('desc-label');
+
+            if (type === 'memo') {
+                itiFields.classList.add('hidden');
+                memoFields.classList.remove('hidden');
+                tagField.classList.add('hidden');
+                btnMemo.classList.add('bg-white', 'dark:bg-surface-dark', 'shadow-sm');
+                btnMemo.classList.remove('text-gray-500');
+                btnItinerary.classList.remove('bg-white', 'dark:bg-surface-dark', 'shadow-sm');
+                btnItinerary.classList.add('text-gray-500');
+                descLabel.innerText = '備註內容';
+            } else {
+                itiFields.classList.remove('hidden');
+                memoFields.classList.add('hidden');
+                tagField.classList.remove('hidden');
+                btnItinerary.classList.add('bg-white', 'dark:bg-surface-dark', 'shadow-sm');
+                btnItinerary.classList.remove('text-gray-500');
+                btnMemo.classList.remove('bg-white', 'dark:bg-surface-dark', 'shadow-sm');
+                btnMemo.classList.add('text-gray-500');
+                descLabel.innerText = '詳細說明 / 備註內容';
+            }
+        }
+
         window.handleFormSubmit = function (e) {
             e.preventDefault();
             const id = document.getElementById('itemId').value;
@@ -824,17 +876,26 @@
                 }
             }
 
+            const type = document.getElementById('itemType').value;
+
             const newItem = {
                 id: id ? parseInt(id) : Date.now(),
                 time: document.getElementById('itemTime').value,
-                name: document.getElementById('itemName').value || '未命名項目',
                 desc: document.getElementById('itemDesc').value,
-                tag: document.getElementById('itemTag').value,
-                images: images,
-                link: document.getElementById('itemUrl').value,
-                transportation: document.getElementById('itemTransportation').value,
-                travelTime: document.getElementById('itemTravelTime').value
+                type: type
             };
+
+            if (type === 'itinerary') {
+                newItem.name = document.getElementById('itemName').value || '未命名項目';
+                newItem.tag = document.getElementById('itemTag').value;
+                newItem.images = images;
+                newItem.link = document.getElementById('itemUrl').value;
+                newItem.transportation = document.getElementById('itemTransportation').value;
+                newItem.travelTime = document.getElementById('itemTravelTime').value;
+            } else {
+                newItem.name = document.getElementById('memoTitle').value || '筆記備註';
+                newItem.tag = '備註'; // 固定標籤
+            }
 
             if (id) {
                 const idx = currentTrip.itinerary[dayKey].findIndex(i => i.id == id);
@@ -854,27 +915,56 @@
 
             document.getElementById('itemId').value = item.id;
             document.getElementById('itemTime').value = item.time;
-            document.getElementById('itemName').value = item.name;
             document.getElementById('itemDesc').value = item.desc || '';
-            document.getElementById('itemTag').value = item.tag || '景點';
 
-            // 處理照片（支援舊版單張和新版多張）
-            let images = [];
-            if (item.images && Array.isArray(item.images)) {
-                images = item.images;
-            } else if (item.image) {
-                // 向後兼容：如果是舊版的單張照片，轉換為數組
-                images = [item.image];
+            // Handle Type Switch & Fields Mapping
+            const type = item.type || 'itinerary';
+            document.getElementById('itemType').value = type;
+
+            if (type === 'memo') {
+                document.getElementById('memoTitle').value = item.name;
+                switchType('memo');
+            } else {
+                document.getElementById('itemName').value = item.name;
+                document.getElementById('itemTag').value = item.tag || '景點';
+                document.getElementById('itemUrl').value = item.link || '';
+                document.getElementById('itemTransportation').value = item.transportation || '';
+                document.getElementById('itemTravelTime').value = item.travelTime || '';
+
+                // 處理照片（支援新舊版）
+                let images = [];
+                if (item.images && Array.isArray(item.images)) images = item.images;
+                else if (item.image) images = [item.image];
+                document.getElementById('itemImages').value = images.length > 0 ? JSON.stringify(images) : '';
+                updateImagePreview();
+                switchType('itinerary');
             }
-            document.getElementById('itemImages').value = images.length > 0 ? JSON.stringify(images) : '';
 
-            document.getElementById('itemUrl').value = item.link || '';
-            document.getElementById('itemTransportation').value = item.transportation || '';
-            document.getElementById('itemTravelTime').value = item.travelTime || '';
-
-            document.getElementById('modal-title').innerText = '編輯行程';
+            // 編輯時隱藏類型切換
+            document.getElementById('type-selector').classList.add('hidden');
+            document.getElementById('modal-title').innerText = '編輯項目';
             document.getElementById('deleteBtn').classList.remove('hidden');
             window.openModal(true);
+        }
+
+        window.openModal = function (isEdit = false) {
+            if (!isEdit) {
+                document.getElementById('itemForm').reset();
+                document.getElementById('itemId').value = '';
+                document.getElementById('itemImages').value = '';
+                document.getElementById('imagePreview').classList.add('hidden');
+                document.getElementById('modal-title').innerText = '新增項目';
+                document.getElementById('deleteBtn').classList.add('hidden');
+                document.getElementById('type-selector').classList.remove('hidden');
+                switchType('itinerary');
+            }
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                content.classList.remove('translate-y-full');
+            }, 10);
         }
 
         window.deleteCurrentItem = function () {
@@ -1051,51 +1141,77 @@
                     '住宿': 'hotel',
                     '購物': 'shopping_bag'
                 };
-                const tagIcon = iconMap[tag] || 'push_pin';
+                const isMemo = item.type === 'memo';
+                const tagIcon = isMemo ? 'assignment' : (iconMap[tag] || 'push_pin');
 
-                const imageBoxClass = hasImages ? 'w-20 h-20' : 'w-12 h-12';
-                const iconSize = hasImages ? 'text-3xl' : 'text-xl';
-                const tagFontSize = hasImages ? 'text-[8px]' : 'text-[7px]';
-
-                // 如果有多張照片，顯示第一張並標示數量
-                const imageRender = hasImages ?
-                    `<div class="relative h-full w-full cursor-pointer" onclick="event.stopPropagation(); openPhotoViewer(${JSON.stringify(images).replace(/"/g, '&quot;')}, 0);">
-                        <img src="${images[0]}" class="h-full w-full object-cover" />
-                        ${images.length > 1 ? `<div class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                            <span class="material-symbols-outlined" style="font-size: 10px;">photo_library</span>
-                            ${images.length}
-                        </div>` : ''}
-                    </div>` :
-                    `<div class="h-full w-full bg-primary/10 dark:bg-primary/20 flex flex-col items-center justify-center text-primary opacity-60">
-                        <span class="material-symbols-outlined ${iconSize}">${tagIcon}</span>
-                        <span class="${tagFontSize} font-bold mt-0.5 uppercase">${tag}</span>
-                    </div>`;
-
-                html += `
-                <div class="relative mb-6 pl-8 group">
-                    <div class="absolute left-[15px] top-6 z-10 box-border size-4 -translate-x-1/2 rounded-full border-[3px] border-background-light bg-primary dark:border-background-dark group-hover:scale-125 transition-transform"></div>
-                    <div class="mb-1 flex items-center gap-2">
-                        <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">${item.time}</span>
-                    </div>
-                    <div class="flex gap-2 overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-transparent hover:border-primary/20 transition-all p-2 pr-3 cursor-pointer" onclick="editItem(${item.id})">
-                        <div class="relative shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-black/20 ${imageBoxClass}">
-                             ${imageRender}
+                if (isMemo) {
+                    html += `
+                    <div class="relative mb-6 pl-8 group">
+                        <div class="absolute left-[15px] top-6 z-10 box-border size-3.5 -translate-x-1/2 rounded-full border-[3px] border-background-light bg-yellow-400 dark:border-background-dark group-hover:scale-125 transition-transform"></div>
+                        <div class="mb-1 flex items-center gap-2">
+                            <span class="text-xs font-bold text-yellow-600 dark:text-yellow-500 font-mono bg-yellow-50 dark:bg-yellow-900/30 px-2 py-0.5 rounded-md">${item.time}</span>
+                            <span class="text-[10px] font-bold text-yellow-600/60 uppercase">Memo</span>
                         </div>
-                        <div class="flex flex-col justify-center min-w-0 flex-1 py-1">
-                            <h3 class="text-sm font-bold text-text-main-light dark:text-text-main-dark break-words leading-tight">${item.name}</h3>
-                            <p class="text-[11px] text-text-sub-light dark:text-text-sub-dark mt-0.5 whitespace-pre-wrap">${item.desc || '無備註'}</p>
-                            <div class="flex items-center gap-2 mt-2">
-                                <span class="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">${tag}</span>
-                                ${item.link ? `
-                                    <a href="${item.link}" target="_blank" onclick="event.stopPropagation()" class="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded hover:bg-primary/20 transition">
-                                        <span class="material-symbols-outlined text-xs">link</span> 連結
-                                    </a>
-                                ` : ''}
+                        <div class="flex flex-col gap-2 rounded-2xl bg-yellow-50/80 dark:bg-yellow-900/10 border border-yellow-200/50 dark:border-yellow-700/20 p-4 cursor-pointer hover:shadow-md transition-all relative overflow-hidden" onclick="editItem(${item.id})">
+                            <div class="absolute top-0 right-0 p-2 opacity-10">
+                                <span class="material-symbols-outlined text-4xl text-yellow-600">assignment</span>
+                            </div>
+                            <h3 class="text-sm font-bold text-yellow-800 dark:text-yellow-200 leading-tight flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">push_pin</span>
+                                ${item.name}
+                            </h3>
+                            <p class="text-[12px] text-yellow-700/80 dark:text-yellow-300/80 leading-relaxed whitespace-pre-wrap">${item.desc || '無內容'}</p>
+                            <div class="mt-2 flex justify-end">
+                                <span class="material-symbols-outlined text-yellow-600/40 text-sm">edit_note</span>
                             </div>
                         </div>
-                        <span class="material-symbols-outlined text-gray-300">chevron_right</span>
-                    </div>
-                </div>`;
+                    </div>`;
+                } else {
+                    const hasImages = images.length > 0;
+                    const imageBoxClass = hasImages ? 'w-20 h-20' : 'w-12 h-12';
+                    const iconSize = hasImages ? 'text-3xl' : 'text-xl';
+                    const tagFontSize = hasImages ? 'text-[8px]' : 'text-[7px]';
+
+                    // 如果有多張照片，顯示第一張並標示數量
+                    const imageRender = hasImages ?
+                        `<div class="relative h-full w-full cursor-pointer" onclick="event.stopPropagation(); openPhotoViewer(${JSON.stringify(images).replace(/"/g, '&quot;')}, 0);">
+                            <img src="${images[0]}" class="h-full w-full object-cover" />
+                            ${images.length > 1 ? `<div class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                <span class="material-symbols-outlined" style="font-size: 10px;">photo_library</span>
+                                ${images.length}
+                            </div>` : ''}
+                        </div>` :
+                        `<div class="h-full w-full bg-primary/10 dark:bg-primary/20 flex flex-col items-center justify-center text-primary opacity-60">
+                            <span class="material-symbols-outlined ${iconSize}">${tagIcon}</span>
+                            <span class="${tagFontSize} font-bold mt-0.5 uppercase">${tag}</span>
+                        </div>`;
+
+                    html += `
+                    <div class="relative mb-6 pl-8 group">
+                        <div class="absolute left-[15px] top-6 z-10 box-border size-4 -translate-x-1/2 rounded-full border-[3px] border-background-light bg-primary dark:border-background-dark group-hover:scale-125 transition-transform"></div>
+                        <div class="mb-1 flex items-center gap-2">
+                            <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">${item.time}</span>
+                        </div>
+                        <div class="flex gap-2 overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-transparent hover:border-primary/20 transition-all p-2 pr-3 cursor-pointer" onclick="editItem(${item.id})">
+                            <div class="relative shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-black/20 ${imageBoxClass}">
+                                 ${imageRender}
+                            </div>
+                            <div class="flex flex-col justify-center min-w-0 flex-1 py-1">
+                                <h3 class="text-sm font-bold text-text-main-light dark:text-text-main-dark break-words leading-tight">${item.name}</h3>
+                                <p class="text-[11px] text-text-sub-light dark:text-text-sub-dark mt-0.5 whitespace-pre-wrap">${item.desc || '無備註'}</p>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span class="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">${tag}</span>
+                                    ${item.link ? `
+                                        <a href="${item.link}" target="_blank" onclick="event.stopPropagation()" class="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded hover:bg-primary/20 transition">
+                                            <span class="material-symbols-outlined text-xs">link</span> 連結
+                                        </a>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <span class="material-symbols-outlined text-gray-300">chevron_right</span>
+                        </div>
+                    </div>`;
+                }
 
                 // 交通方式標籤（在兩個項目之間）
                 if (index < items.length - 1 && (item.transportation || item.travelTime)) {
