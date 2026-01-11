@@ -1095,21 +1095,24 @@
                         </div>
                         <span class="material-symbols-outlined text-gray-300">chevron_right</span>
                     </div>
-                </div>
-                    
-                ${index < items.length - 1 && (item.transportation || item.travelTime) ? `
-                    <button onclick="event.stopPropagation(); editTransportation(${item.id})" 
-                        class="absolute left-[15px] -translate-x-1/2 mt-3 z-10
-                            bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 
-                            text-text-main-light dark:text-text-main-dark px-2 py-1.5 rounded-lg 
-                            text-[10px] font-medium shadow-sm border border-gray-200 dark:border-gray-700
-                            transition-all hover:scale-105 flex flex-col items-center gap-0.5 group/trans min-w-[60px]">
-                        ${item.transportation ? `<div class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size: 12px; opacity: 0.6;">directions</span><span class="font-bold">${item.transportation}</span></div>` : ''}
-                        ${item.travelTime ? `<div class="text-[9px] opacity-70">${item.travelTime}</div>` : ''}
-                        <span class="material-symbols-outlined opacity-0 group-hover/trans:opacity-60 transition" style="font-size: 12px;">edit</span>
-                    </button>
-                ` : ''}
-            `;
+                </div>`;
+
+                // 交通方式標籤（在兩個項目之間）
+                if (index < items.length - 1 && (item.transportation || item.travelTime)) {
+                    html += `
+                    <div class="relative pl-2 my-3">
+                        <button onclick="event.stopPropagation(); editTransportation(${item.id})" 
+                            class="absolute left-[23px] z-10
+                                bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 
+                                text-text-main-light dark:text-text-main-dark px-2.5 py-1.5 rounded-lg 
+                                text-[10px] font-medium shadow-sm border border-gray-200 dark:border-gray-700
+                                transition-all hover:scale-105 flex flex-col items-start gap-0.5 group/trans">
+                            ${item.transportation ? `<div class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size: 11px; opacity: 0.6;">directions</span><span class="font-bold">${item.transportation}</span></div>` : ''}
+                            ${item.travelTime ? `<div class="text-[9px] opacity-70 pl-4">${item.travelTime}</div>` : ''}
+                            <span class="material-symbols-outlined opacity-0 group-hover/trans:opacity-60 transition absolute bottom-1 right-1" style="font-size: 11px;">edit</span>
+                        </button>
+                    </div>`;
+                }
             });
             container.innerHTML = html;
         }
