@@ -1100,17 +1100,27 @@
                 // 交通方式標籤（在兩個項目之間）
                 if (index < items.length - 1 && (item.transportation || item.travelTime)) {
                     html += `
-                    <div class="relative pl-2 my-3">
+                    <div class="relative pl-12 -mt-2 mb-4 h-12">
+                        <!-- 上箭頭 -->
+                        <div class="absolute left-[23px] top-0 -translate-x-1/2 text-gray-300 dark:text-gray-700">
+                            <span class="material-symbols-outlined" style="font-size: 12px; display: block;">south</span>
+                        </div>
+                        
                         <button onclick="event.stopPropagation(); editTransportation(${item.id})" 
-                            class="absolute left-[23px] z-10
-                                bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 
+                            class="absolute left-[23px] top-1/2 -translate-y-1/2 z-10
+                                bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 
                                 text-text-main-light dark:text-text-main-dark px-2.5 py-1.5 rounded-lg 
                                 text-[10px] font-medium shadow-sm border border-gray-200 dark:border-gray-700
-                                transition-all hover:scale-105 flex flex-col items-start gap-0.5 group/trans">
+                                transition-all hover:scale-105 flex flex-col items-start gap-0.5 group/trans border-l-[3px] border-l-primary/30">
                             ${item.transportation ? `<div class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size: 11px; opacity: 0.6;">directions</span><span class="font-bold">${item.transportation}</span></div>` : ''}
                             ${item.travelTime ? `<div class="text-[9px] opacity-70 pl-4">${item.travelTime}</div>` : ''}
-                            <span class="material-symbols-outlined opacity-0 group-hover/trans:opacity-60 transition absolute bottom-1 right-1" style="font-size: 11px;">edit</span>
+                            <span class="material-symbols-outlined opacity-0 group-hover/trans:opacity-60 transition absolute top-1 right-1" style="font-size: 11px;">edit</span>
                         </button>
+
+                        <!-- 下箭頭 -->
+                        <div class="absolute left-[23px] bottom-0 -translate-x-1/2 text-gray-300 dark:text-gray-700">
+                            <span class="material-symbols-outlined" style="font-size: 12px; display: block;">south</span>
+                        </div>
                     </div>`;
                 }
             });
