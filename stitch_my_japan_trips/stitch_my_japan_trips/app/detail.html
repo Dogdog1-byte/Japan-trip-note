@@ -192,6 +192,18 @@
                     </div>
                 </div>
 
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">到下一站的交通方式 (選填)</label>
+                    <input type="text" id="itemTransportation" placeholder="例如：富士急行巴士、步行、JR成田特快"
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 ml-1 text-text-sub-light">乘坐時間 (選填)</label>
+                    <input type="text" id="itemTravelTime" placeholder="例如：20分鐘、1.5小時"
+                        class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-4 text-sm focus:ring-1 focus:ring-primary">
+                </div>
+
                 <div class="pt-4">
                     <button type="submit"
                         class="w-full py-4 bg-primary text-primary-content rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform">
@@ -819,7 +831,9 @@
                 desc: document.getElementById('itemDesc').value,
                 tag: document.getElementById('itemTag').value,
                 images: images,
-                link: document.getElementById('itemUrl').value
+                link: document.getElementById('itemUrl').value,
+                transportation: document.getElementById('itemTransportation').value,
+                travelTime: document.getElementById('itemTravelTime').value
             };
 
             if (id) {
@@ -855,6 +869,8 @@
             document.getElementById('itemImages').value = images.length > 0 ? JSON.stringify(images) : '';
 
             document.getElementById('itemUrl').value = item.link || '';
+            document.getElementById('itemTransportation').value = item.transportation || '';
+            document.getElementById('itemTravelTime').value = item.travelTime || '';
 
             document.getElementById('modal-title').innerText = '編輯行程';
             document.getElementById('deleteBtn').classList.remove('hidden');
@@ -880,6 +896,26 @@
                 saveTrip();
                 renderAll();
             }
+        }
+
+        window.editTransportation = function (itemId) {
+            const dayKey = `day${currentDayIndex + 1}`;
+            const item = currentTrip.itinerary[dayKey].find(i => i.id == itemId);
+            if (!item) return;
+
+            const currentTransport = item.transportation || '';
+            const currentTime = item.travelTime || '';
+
+            const newTransport = prompt("請輸入交通方式：\n(例如：富士急行巴士、步行、JR成田特快)", currentTransport);
+            if (newTransport === null) return; // 用戶取消
+
+            const newTime = prompt("請輸入乘坐時間：\n(例如：20分鐘、1.5小時)", currentTime);
+            if (newTime === null) return; // 用戶取消
+
+            item.transportation = newTransport.trim();
+            item.travelTime = newTime.trim();
+            saveTrip();
+            renderTimeline();
         }
 
         window.shareTrip = function () {
@@ -1059,6 +1095,18 @@
                         </div>
                         <span class="material-symbols-outlined text-gray-300">chevron_right</span>
                     </div>
+                    
+                    ${index < items.length - 1 && (item.transportation || item.travelTime) ? `
+                        <button onclick="event.stopPropagation(); editTransportation(${item.id})" 
+                            class="absolute left-[15px] top-[calc(100%+20px)] -translate-x-1/2 z-10 
+                                bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full 
+                                text-[10px] font-bold shadow-md transition-all hover:scale-105 
+                                flex items-center gap-1.5 whitespace-nowrap group/trans">
+                            <span class="material-symbols-outlined text-xs opacity-90">directions</span>
+                            <span>${item.transportation || ''}${item.transportation && item.travelTime ? ' · ' : ''}${item.travelTime || ''}</span>
+                            <span class="material-symbols-outlined text-xs opacity-0 group-hover/trans:opacity-100 transition">edit</span>
+                        </button>
+                    ` : ''}
                 </div>`;
             });
             container.innerHTML = html;
