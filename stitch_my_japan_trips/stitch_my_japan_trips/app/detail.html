@@ -1095,19 +1095,22 @@
                         </div>
                         <span class="material-symbols-outlined text-gray-300">chevron_right</span>
                     </div>
+                </div>
                     
-                    ${index < items.length - 1 && (item.transportation || item.travelTime) ? `
+                ${index < items.length - 1 && (item.transportation || item.travelTime) ? `
+                    <div class="relative flex justify-center my-4">
                         <button onclick="event.stopPropagation(); editTransportation(${item.id})" 
-                            class="absolute left-[15px] top-[calc(100%+20px)] -translate-x-1/2 z-10 
-                                bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full 
-                                text-[10px] font-bold shadow-md transition-all hover:scale-105 
-                                flex items-center gap-1.5 whitespace-nowrap group/trans">
-                            <span class="material-symbols-outlined text-xs opacity-90">directions</span>
+                            class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 
+                                text-text-main-light dark:text-text-main-dark px-3 py-1.5 rounded-full 
+                                text-[11px] font-medium shadow-sm border border-gray-200 dark:border-gray-700
+                                transition-all hover:scale-105 flex items-center gap-1.5 group/trans">
+                            <span class="material-symbols-outlined text-sm opacity-60">directions</span>
                             <span>${item.transportation || ''}${item.transportation && item.travelTime ? ' · ' : ''}${item.travelTime || ''}</span>
-                            <span class="material-symbols-outlined text-xs opacity-0 group-hover/trans:opacity-100 transition">edit</span>
+                            <span class="material-symbols-outlined text-sm opacity-0 group-hover/trans:opacity-60 transition">edit</span>
                         </button>
-                    ` : ''}
-                </div>`;
+                    </div>
+                ` : `<div class="mb-2"></div>`}
+            `;
             });
             container.innerHTML = html;
         }
