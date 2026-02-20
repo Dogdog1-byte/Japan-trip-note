@@ -94,7 +94,7 @@
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <p class="text-xs font-bold opacity-80 uppercase tracking-wider">總支出</p>
-                        <h2 id="total-amount" class="text-4xl font-black mt-1">¥ 0</h2>
+                        <h2 id="total-amount" class="text-4xl font-black mt-1">NT$ 0</h2>
                     </div>
                     <span class="material-symbols-outlined text-3xl opacity-50">payments</span>
                 </div>
@@ -103,15 +103,20 @@
                 </div>
 
                 <div id="exchange-rate-info"
-                    class="mt-4 pt-4 border-t border-white/20 text-[10px] font-bold opacity-80 flex justify-between items-center">
-                    <div class="flex items-center gap-1">
-                        <span>匯率更新：<span id="rate-time">載入中...</span></span>
-                        <button onclick="window.fetchExchangeRate()"
-                            class="hover:rotate-180 transition-transform duration-500 flex items-center">
-                            <span class="material-symbols-outlined text-[14px]">refresh</span>
-                        </button>
+                    class="mt-4 pt-4 border-t border-white/20 text-[10px] font-bold opacity-80">
+                    <div class="flex items-center justify-between gap-1 mb-2">
+                        <div class="flex items-center gap-1">
+                            <span>匯率更新：<span id="rate-time">載入中...</span></span>
+                            <button onclick="window.fetchExchangeRate()"
+                                class="hover:rotate-180 transition-transform duration-500 flex items-center">
+                                <span class="material-symbols-outlined text-[14px]">refresh</span>
+                            </button>
+                        </div>
+                        <span class="opacity-60">vs TWD</span>
                     </div>
-                    <span>1 JPY ≈ <span id="jpy-twd-rate">...</span> TWD</span>
+                    <div id="all-rates-display" class="flex flex-wrap gap-x-3 gap-y-1">
+                        <!-- Rates injected by JS -->
+                    </div>
                 </div>
             </div>
 
@@ -206,10 +211,24 @@
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
                             <label
-                                class="block text-[9px] font-black mb-0.5 ml-0.5 text-text-sub-light opacity-60 uppercase">金額
-                                (¥)</label>
-                            <input type="number" id="expAmount" required placeholder="0"
-                                class="w-full bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2 text-sm font-bold focus:ring-1 focus:ring-primary">
+                                class="block text-[9px] font-black mb-0.5 ml-0.5 text-text-sub-light opacity-60 uppercase">金額</label>
+                            <div class="flex gap-1">
+                                <select id="expCurrency"
+                                    class="bg-gray-50 dark:bg-black/20 border-none rounded-xl px-1.5 py-2 text-xs font-bold focus:ring-1 focus:ring-primary w-[72px] shrink-0"
+                                    onchange="updateTaxRefundVisibility()">
+                                    <option value="JPY">¥ JPY</option>
+                                    <option value="TWD">$ TWD</option>
+                                    <option value="USD">$ USD</option>
+                                    <option value="EUR">€ EUR</option>
+                                    <option value="KRW">₩ KRW</option>
+                                    <option value="SGD">$ SGD</option>
+                                    <option value="HKD">$ HKD</option>
+                                    <option value="THB">฿ THB</option>
+                                    <option value="GBP">£ GBP</option>
+                                </select>
+                                <input type="number" id="expAmount" required placeholder="0"
+                                    class="flex-1 min-w-0 bg-gray-50 dark:bg-black/20 border-none rounded-xl p-2 text-sm font-bold focus:ring-1 focus:ring-primary">
+                            </div>
                         </div>
                         <div>
                             <label
@@ -254,7 +273,7 @@
                         </div>
                     </div>
 
-                    <div
+                    <div id="taxRefundRow"
                         class="flex items-center gap-2 bg-gray-50 dark:bg-black/20 rounded-xl px-3 py-2 cursor-pointer hover:bg-primary/5 transition-colors">
                         <input type="checkbox" id="expTaxRefund" class="rounded text-primary focus:ring-primary size-4">
                         <div class="flex flex-col">
@@ -350,33 +369,80 @@
             document.documentElement.classList.add('dark');
         }
 
-        let exchangeRate = 0.22; // Default fallback
+        // Exchange rates: key = currency code, value = rate to TWD
+        const CURRENCY_SYMBOLS = {
+            JPY: '¥', TWD: 'NT$', USD: '$', EUR: '€',
+            KRW: '₩', SGD: 'S$', HKD: 'HK$', THB: '฿', GBP: '£'
+        };
+        const CURRENCY_DEFAULTS = {
+            JPY: 0.22, TWD: 1, USD: 32, EUR: 35,
+            KRW: 0.023, SGD: 24, HKD: 4.1, THB: 0.93, GBP: 40
+        };
+        let exchangeRates = {}; // filled by fetchExchangeRate
         let rateLastUpdated = "";
+
+        function getRateTwd(currency) {
+            return exchangeRates[currency] ?? CURRENCY_DEFAULTS[currency] ?? 1;
+        }
+
+        function formatAmount(amount, currency) {
+            const sym = CURRENCY_SYMBOLS[currency] || currency;
+            // JPY / KRW are integer currencies
+            const decimals = ['JPY', 'KRW'].includes(currency) ? 0 : 2;
+            return `${sym}${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: decimals })}`;
+        }
 
         window.fetchExchangeRate = async function () {
             try {
-                const res = await fetch('https://open.er-api.com/v6/latest/JPY');
+                // Fetch TWD-based rates (1 TWD = ? foreign)
+                const res = await fetch('https://open.er-api.com/v6/latest/TWD');
                 const data = await res.json();
-                if (data && data.rates && data.rates.TWD) {
-                    exchangeRate = data.rates.TWD;
+                if (data && data.rates) {
+                    const twdRates = data.rates; // 1 TWD = twdRates[X] units of X
+                    // Convert: 1 X = 1/twdRates[X] TWD
+                    Object.keys(CURRENCY_DEFAULTS).forEach(cur => {
+                        if (cur === 'TWD') { exchangeRates['TWD'] = 1; return; }
+                        if (twdRates[cur]) exchangeRates[cur] = 1 / twdRates[cur];
+                    });
                     rateLastUpdated = new Date().toLocaleString('zh-TW', { hour12: false });
-                    localStorage.setItem('cached_jpy_rate', exchangeRate);
+                    localStorage.setItem('cached_rates', JSON.stringify(exchangeRates));
                     localStorage.setItem('cached_rate_time', rateLastUpdated);
                     updateRateDisplay();
                 }
             } catch (e) {
                 console.error("Failed to fetch rate", e);
-                exchangeRate = parseFloat(localStorage.getItem('cached_jpy_rate')) || 0.22;
+                try { exchangeRates = JSON.parse(localStorage.getItem('cached_rates')) || {}; } catch (_) { }
                 rateLastUpdated = localStorage.getItem('cached_rate_time') || "離線數據";
                 updateRateDisplay();
             }
         }
 
         function updateRateDisplay() {
-            const rateEl = document.getElementById('jpy-twd-rate');
             const timeEl = document.getElementById('rate-time');
-            if (rateEl) rateEl.innerText = exchangeRate.toFixed(4);
             if (timeEl) timeEl.innerText = rateLastUpdated;
+            const ratesDisplay = document.getElementById('all-rates-display');
+            if (ratesDisplay) {
+                ratesDisplay.innerHTML = Object.keys(CURRENCY_DEFAULTS)
+                    .filter(c => c !== 'TWD')
+                    .map(c => {
+                        const rate = getRateTwd(c);
+                        const sym = CURRENCY_SYMBOLS[c] || c;
+                        return `<span>1${sym}≈<strong>${rate.toFixed(c === 'JPY' || c === 'KRW' ? 4 : 2)}NT$</strong></span>`;
+                    }).join('');
+            }
+        }
+
+        window.updateTaxRefundVisibility = function () {
+            const cur = document.getElementById('expCurrency');
+            const row = document.getElementById('taxRefundRow');
+            if (!cur || !row) return;
+            // Tax refund only makes sense for JPY
+            if (cur.value !== 'JPY') {
+                row.classList.add('hidden');
+                document.getElementById('expTaxRefund').checked = false;
+            } else {
+                row.classList.remove('hidden');
+            }
         }
 
         function handleTripChange(id) {
@@ -515,6 +581,7 @@
 
                     if (exp) {
                         if (modalTitle) modalTitle.innerText = "編輯 / 詳細資訊";
+                        document.getElementById('expCurrency').value = exp.currency || 'JPY';
                         document.getElementById('expAmount').value = exp.amount || 0;
                         document.getElementById('expCategory').value = exp.category || '其他';
                         document.getElementById('expTitle').value = exp.title || '';
@@ -523,6 +590,7 @@
                         document.getElementById('expTaxRefund').checked = !!exp.isTaxRefund;
                         document.getElementById('expDesc').value = exp.desc || '';
                         document.getElementById('expUrl').value = exp.url || '';
+                        window.updateTaxRefundVisibility();
 
                         // Update textarea height
                         const descArea = document.getElementById('expDesc');
@@ -584,11 +652,12 @@
             saveBtn.innerText = "儲存中...";
 
             try {
-                const amountJpy = parseInt(document.getElementById('expAmount').value);
+                const currency = document.getElementById('expCurrency').value || 'JPY';
+                const rawAmount = parseFloat(document.getElementById('expAmount').value);
                 const participants = Array.from(document.querySelectorAll('input[name="participant"]:checked')).map(i => i.value);
                 const payer = document.getElementById('expPayer').value;
 
-                if (isNaN(amountJpy) || amountJpy <= 0) {
+                if (isNaN(rawAmount) || rawAmount <= 0) {
                     alert("請輸入正確金額");
                     saveBtn.disabled = false;
                     saveBtn.innerText = "儲存支出";
@@ -602,17 +671,23 @@
                     return;
                 }
 
+                // For integer currencies, store as integer
+                const amount = ['JPY', 'KRW'].includes(currency) ? Math.round(rawAmount) : rawAmount;
+                const rateTwd = getRateTwd(currency);
+                const amountTwd = Math.round(amount * rateTwd);
+
                 const expensesArray = currentTrip && currentTrip.expenses ? (Array.isArray(currentTrip.expenses) ? currentTrip.expenses : Object.values(currentTrip.expenses)) : [];
                 const existingExp = editingId ? expensesArray.find(e => e.id == editingId) : null;
 
                 const expense = {
                     id: editingId || Date.now(),
-                    amount: amountJpy,
-                    amountTwd: Math.round(amountJpy * (exchangeRate || 0.22)),
+                    currency: currency,
+                    amount: amount,
+                    amountTwd: amountTwd,
                     category: document.getElementById('expCategory').value,
                     title: document.getElementById('expTitle').value,
                     method: document.getElementById('expMethod').value,
-                    isTaxRefund: document.getElementById('expTaxRefund').checked,
+                    isTaxRefund: currency === 'JPY' ? document.getElementById('expTaxRefund').checked : false,
                     desc: document.getElementById('expDesc').value,
                     url: document.getElementById('expUrl').value,
                     payer: payer,
@@ -702,32 +777,38 @@
 
                 const expenses = [...expensesArray].sort((a, b) => b.id - a.id);
 
-                let totalJpy = 0;
                 let totalTwd = 0;
-                let totalRefund = 0;
-                const cats = {};
+                let totalRefundTwd = 0;
+                const cats = {}; // category -> TWD amount
 
                 container.innerHTML = expenses.map(exp => {
-                    const refund = exp.isTaxRefund ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
-                    totalJpy += exp.amount;
-                    totalTwd += (exp.amountTwd || 0);
-                    totalRefund += refund;
+                    const currency = exp.currency || 'JPY';
+                    const sym = CURRENCY_SYMBOLS[currency] || currency;
+                    const refund = (exp.isTaxRefund && currency === 'JPY') ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
+                    const rateTwd = getRateTwd(currency);
+                    const refundTwd = Math.round(refund * rateTwd);
+                    const amountTwd = exp.amountTwd || Math.round(exp.amount * rateTwd);
+                    totalTwd += amountTwd;
+                    totalRefundTwd += refundTwd;
 
-                    // For categories, use net amount to reflect real cost
-                    const netAmount = exp.amount - refund;
-                    cats[exp.category] = (cats[exp.category] || 0) + netAmount;
+                    // For categories, use TWD equivalent of net amount
+                    const netAmountTwd = amountTwd - refundTwd;
+                    cats[exp.category] = (cats[exp.category] || 0) + netAmountTwd;
 
                     const splitCount = exp.participants ? exp.participants.length : 1;
-                    const perPerson = Math.round(netAmount / splitCount);
-                    const splitText = exp.participants ? `💸 ${exp.payer} 墊 / ${exp.participants.length}人分 (每人 ¥${perPerson}${exp.isTaxRefund ? ' 扣退稅' : ''})` : exp.payer;
+                    const perPersonTwd = Math.round((amountTwd - refundTwd) / splitCount);
+                    const splitText = exp.participants
+                        ? `💸 ${exp.payer} 墊 / ${exp.participants.length}人分 (每人 ≈NT$${perPersonTwd}${exp.isTaxRefund ? ' 扣退稅' : ''})`
+                        : exp.payer;
 
-                    const refundTag = exp.isTaxRefund ? `
+                    const refundTag = (exp.isTaxRefund && currency === 'JPY') ? `
                     <div class="mt-1 flex items-center gap-1 text-[9px] font-bold text-green-600 dark:text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
                         <span class="material-symbols-outlined text-[10px]">savings</span>
-                        <span>預計退稅 ¥${refund.toLocaleString()}</span>
+                        <span>預計退稅 ¥${refund.toLocaleString()} ≈ NT$${refundTwd.toLocaleString()}</span>
                     </div>
                 ` : '';
 
+                    const isTwd = currency === 'TWD';
                     return `
                     <div class="flex items-stretch gap-2 mb-4">
                         <div class="swipe-container flex-1 min-w-0">
@@ -747,12 +828,15 @@
                                 <div class="flex-1 min-w-0 flex flex-col gap-0.5">
                                     <div class="flex justify-between items-baseline gap-1">
                                         <h4 class="font-bold text-sm truncate flex-1">${exp.title}</h4>
-                                        <p class="font-black text-base text-primary shrink-0">¥ ${exp.amount.toLocaleString()}</p>
+                                        <div class="flex items-baseline gap-1 shrink-0">
+                                            <span class="text-[9px] font-bold bg-primary/10 text-primary rounded px-1">${currency}</span>
+                                            <p class="font-black text-base text-primary">${sym}${exp.amount.toLocaleString()}</p>
+                                        </div>
                                     </div>
                                     
                                     <div class="flex justify-between items-center gap-1">
                                         <p class="text-[10px] text-text-sub-light truncate opacity-80 flex-1 italic">${exp.method || '現金'} · ${splitText}</p>
-                                        <p class="text-[10px] text-text-sub-light shrink-0 font-medium">≈ NT$ ${(exp.amountTwd || 0).toLocaleString()}</p>
+                                        ${!isTwd ? `<p class="text-[10px] text-text-sub-light shrink-0 font-medium">≈ NT$ ${amountTwd.toLocaleString()}</p>` : ''}
                                     </div>
 
                                     ${refundTag}
@@ -791,28 +875,27 @@
                 `;
                 }).join('');
 
-                if (totalRefund > 0) {
+                if (totalRefundTwd > 0) {
                     totalDisplay.innerHTML = `
                     <div class="flex flex-col">
                         <div class="flex items-baseline gap-2">
-                            <span>¥ ${(totalJpy - totalRefund).toLocaleString()}</span>
-                            <span class="text-xs opacity-50 font-normal">原價 ¥${totalJpy.toLocaleString()}</span>
+                            <span>NT$ ${(totalTwd - totalRefundTwd).toLocaleString()}</span>
+                            <span class="text-xs opacity-50 font-normal">原價 NT$${totalTwd.toLocaleString()}</span>
                         </div>
                         <div class="text-[10px] bg-white/20 self-start px-2 py-0.5 rounded-full mt-1 flex items-center gap-1">
                             <span class="material-symbols-outlined text-[12px]">account_balance_wallet</span>
-                            預計扣除退稅 ¥${totalRefund.toLocaleString()}
+                            預計扣除退稅 ≈ NT$${totalRefundTwd.toLocaleString()}
                         </div>
-                        <div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>
                     </div>
                 `;
                 } else {
-                    totalDisplay.innerHTML = `<div>¥ ${totalJpy.toLocaleString()}</div><div class="text-xs opacity-70 font-bold mt-1">≈ NT$ ${totalTwd.toLocaleString()}</div>`;
+                    totalDisplay.innerHTML = `<div>NT$ ${totalTwd.toLocaleString()}</div>`;
                 }
 
                 catSummary.innerHTML = Object.entries(cats).map(([cat, amt]) => `
                 <div class="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1 shrink-0">
                     <span class="text-[10px] font-bold">${cat}</span>
-                    <span class="text-[10px] font-black">¥${amt.toLocaleString()}</span>
+                    <span class="text-[10px] font-black">NT$${amt.toLocaleString()}</span>
                 </div>
             `).join('');
 
@@ -895,7 +978,7 @@
                                     label: function (context) {
                                         const label = context.label || '';
                                         const value = context.raw || 0;
-                                        return ` ${label}: ¥${value.toLocaleString()}`;
+                                        return ` ${label}: NT$${value.toLocaleString()}`;
                                     }
                                 }
                             }
@@ -930,17 +1013,21 @@
 
                 expensesArray.forEach(exp => {
                     if (!exp) return;
-                    const refund = exp.isTaxRefund ? Math.round(exp.amount - (exp.amount / 1.1)) : 0;
-                    const netAmount = exp.amount - refund;
-                    const amount = exp.amount;
+                    const currency = exp.currency || 'JPY';
+                    const rateTwd = getRateTwd(currency);
+                    // Use TWD equivalents for fair settlement across currencies
+                    const amountTwd = exp.amountTwd || Math.round(exp.amount * rateTwd);
+                    const refundTwd = (exp.isTaxRefund && currency === 'JPY')
+                        ? Math.round((exp.amount - (exp.amount / 1.1)) * rateTwd) : 0;
+                    const netAmountTwd = amountTwd - refundTwd;
                     const payer = exp.payer;
                     const participants = exp.participants || [payer];
 
                     if (payer && totalPaid.hasOwnProperty(payer)) {
-                        totalPaid[payer] += amount;
+                        totalPaid[payer] += amountTwd;
                     }
 
-                    const share = netAmount / participants.length;
+                    const share = netAmountTwd / participants.length;
                     participants.forEach(p => {
                         if (totalConsumed.hasOwnProperty(p)) {
                             totalConsumed[p] += share;
@@ -988,11 +1075,11 @@
                         <div class="space-y-1">
                             <div class="flex justify-between items-end gap-2">
                                 <span class="text-[9px] opacity-60">墊付</span>
-                                <span class="text-xs font-bold font-mono">¥${Math.round(totalPaid[m] || 0).toLocaleString()}</span>
+                                <span class="text-xs font-bold font-mono">NT$${Math.round(totalPaid[m] || 0).toLocaleString()}</span>
                             </div>
                             <div class="flex justify-between items-end gap-2">
                                 <span class="text-[9px] opacity-60">消費</span>
-                                <span class="text-xs font-bold font-mono text-primary">¥${Math.round(totalConsumed[m] || 0).toLocaleString()}</span>
+                                <span class="text-xs font-bold font-mono text-primary">NT$${Math.round(totalConsumed[m] || 0).toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
@@ -1008,8 +1095,7 @@
                                 <span class="font-bold text-sm text-text-main">${t.to}</span>
                             </div>
                             <div class="text-right">
-                                <p class="font-black text-primary text-base">¥ ${t.amount.toLocaleString()}</p>
-                                <p class="text-[10px] text-text-sub-light opacity-70">≈ NT$ ${Math.round(t.amount * (exchangeRate || 0.22)).toLocaleString()}</p>
+                                <p class="font-black text-primary text-base">NT$ ${t.amount.toLocaleString()}</p>
                             </div>
                         </div>
                     `).join('');
